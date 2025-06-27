@@ -5,7 +5,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.68+-green.svg)](https://fastapi.tiangolo.com/)
 [![CUDA](https://img.shields.io/badge/CUDA-11.0+-red.svg)](https://developer.nvidia.com/cuda-downloads)
 
-基于Real-ESRGAN的高性能动漫图片四倍放大和高清修复API服务，支持GPU加速、并发处理和局域网访问。
+基于 [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) 的高性能动漫图片四倍放大和高清修复API服务，支持GPU加速、并发处理和局域网访问。
 
 ## ✨ 主要特性
 
@@ -15,7 +15,7 @@
 - 📊 **实时进度跟踪** - 详细的处理状态和进度显示
 - 🛡️ **类型安全** - 使用Pydantic进行强类型验证
 - 📖 **自动文档** - 自动生成API文档和交互式界面
-- 🔧 **完整工具链** - 测试、监控、批量处理工具一应俱全
+- 🔧 **一键安装** - 自动安装Real-ESRGAN和所有依赖
 
 ## 🎯 性能表现
 
@@ -42,9 +42,9 @@
 
 ### 🔧 安装步骤
 
-#### 1. 克隆项目
+#### 1. 克隆项目（包含Real-ESRGAN）
 ```bash
-git clone https://github.com/RuthlessXdream/anime-image-upscaler-api.git
+git clone --recursive https://github.com/RuthlessXdream/anime-image-upscaler-api.git
 cd anime-image-upscaler-api
 ```
 
@@ -60,37 +60,30 @@ source anime_upscale/bin/activate  # Linux/macOS
 # anime_upscale\Scripts\activate  # Windows
 ```
 
-#### 3. 安装依赖
+#### 3. 安装项目依赖
 ```bash
 pip install -r requirements.txt
 ```
 
-#### 4. 安装Real-ESRGAN
+#### 4. 一键安装Real-ESRGAN（推荐）
 ```bash
-# 克隆Real-ESRGAN到上级目录
-cd ..
-git clone https://github.com/xinntao/Real-ESRGAN.git
-cd Real-ESRGAN
+python install_dependencies.py
+```
 
-# 安装Real-ESRGAN依赖
-pip install basicsr
-pip install facexlib
-pip install gfpgan
+#### 或手动安装Real-ESRGAN
+```bash
+cd Real-ESRGAN
+pip install basicsr facexlib gfpgan
 pip install -r requirements.txt
 python setup.py develop
-```
 
-#### 5. 下载AI模型
-```bash
-# 下载动漫专用模型（约18MB）
+# 下载动漫专用模型
 wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.2.4/RealESRGAN_x4plus_anime_6B.pth -P weights/
-
-# Windows用户可手动下载到 Real-ESRGAN/weights/ 目录
+cd ..
 ```
 
-#### 6. 启动服务
+#### 5. 启动服务
 ```bash
-cd ../animate-photo-upscale-api
 python start_server.py
 ```
 
@@ -157,13 +150,12 @@ curl -O "http://localhost:8000/download/YOUR_TASK_ID"
 
 ### 🚀 启动和管理
 - `start_server.py` - 启动API服务
+- `install_dependencies.py` - 一键安装Real-ESRGAN
 - `setup_firewall.bat` - 配置Windows防火墙
 - `network_test.py` - 网络连接测试
 
 ### 🧪 测试工具
-- `test_client.py` - 基础API测试
-- `enhanced_test_client.py` - 增强版测试（实时进度）
-- `performance_test.py` - 性能测试和并发测试
+- `test_client.py` - 基础API测试和功能验证
 
 ### 📦 批量处理
 - `batch_processor.py` - 批量图片处理（保持目录结构）
@@ -185,6 +177,25 @@ curl -O "http://localhost:8000/download/YOUR_TASK_ID"
 | `/tasks` | GET | 列出所有任务 |
 | `/task/{task_id}` | DELETE | 删除任务 |
 
+## 🏗️ 项目结构
+
+```
+anime-image-upscaler-api/
+├── Real-ESRGAN/              # Real-ESRGAN子模块（AI模型核心）
+├── main.py                   # FastAPI服务端
+├── start_server.py          # 启动脚本
+├── install_dependencies.py  # 一键安装脚本
+├── requirements.txt         # Python依赖
+├── batch_processor.py       # 批量处理工具
+├── test_client.py          # 测试客户端
+├── network_test.py         # 网络诊断
+├── setup_firewall.bat      # Windows防火墙配置
+└── docs/                   # 文档目录
+    ├── README.md           # 项目说明
+    ├── CONTRIBUTING.md     # 贡献指南
+    └── DEPLOYMENT.md       # 部署指南
+```
+
 ## 🔧 配置和优化
 
 ### GPU并发优化
@@ -205,6 +216,11 @@ MAX_WORKERS = 2  # 手动设置并发数
 <details>
 <summary><strong>常见问题解决</strong></summary>
 
+### 安装问题
+- **子模块未下载**: 运行 `git submodule update --init --recursive`
+- **依赖安装失败**: 运行 `python install_dependencies.py`
+- **模型下载失败**: 手动下载模型到 `Real-ESRGAN/weights/` 目录
+
 ### GPU相关问题
 - **CUDA out of memory**: 降低并发数或重启服务
 - **模型加载失败**: 检查模型文件路径和权限
@@ -214,11 +230,6 @@ MAX_WORKERS = 2  # 手动设置并发数
 - **局域网无法访问**: 运行`python network_test.py`诊断
 - **防火墙阻止**: 运行`setup_firewall.bat`（Windows）
 - **端口占用**: 更改端口或关闭占用程序
-
-### 性能问题
-- **处理速度慢**: 检查GPU使用率和显存占用
-- **内存不足**: 增加系统内存或降低并发数
-- **磁盘空间不足**: 清理outputs和uploads目录
 
 </details>
 
@@ -234,20 +245,25 @@ MAX_WORKERS = 2  # 手动设置并发数
 
 ## 📝 更新日志
 
-### v1.1.0 (最新)
+### v1.2.0 (最新)
+- ✅ 集成Real-ESRGAN作为子模块
+- ✅ 添加一键安装脚本
+- ✅ 简化安装流程
+- ✅ 优化项目结构
+- ✅ 移除不必要的测试文件
+
+### v1.1.0
 - ✅ 新增局域网访问支持
 - ✅ 修复Pydantic模型警告
 - ✅ 过滤torchvision废弃警告
 - ✅ 添加防火墙配置脚本
 - ✅ 添加网络连接测试工具
-- ✅ 优化启动脚本显示信息
 
 ### v1.0.0
 - ✅ 基础API服务功能
 - ✅ GPU加速处理
 - ✅ 并发处理支持
 - ✅ 批量处理工具
-- ✅ 性能测试工具
 
 ## 📄 许可证
 
