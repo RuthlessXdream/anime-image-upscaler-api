@@ -1,287 +1,265 @@
-# 🎨 动漫图片高清修复API
+# 🎨 现代化动漫图片高清修复API
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.68+-green.svg)](https://fastapi.tiangolo.com/)
-[![CUDA](https://img.shields.io/badge/CUDA-11.0+-red.svg)](https://developer.nvidia.com/cuda-downloads)
+基于Real-ESRGAN的高性能动漫图片四倍放大和高清修复服务，采用现代化Python架构重构。
 
-基于 [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) 的高性能动漫图片四倍放大和高清修复API服务，支持GPU加速、并发处理和局域网访问。
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104%2B-green.svg)](https://fastapi.tiangolo.com)
+[![Pydantic](https://img.shields.io/badge/Pydantic-v2-red.svg)](https://pydantic.dev)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## ✨ 主要特性
+## ✨ 特性
 
-- 🚀 **高性能AI处理** - 基于Real-ESRGAN_x4plus_anime_6B模型，专门优化动漫图片
-- 🔄 **智能并发处理** - 根据GPU显存自动调整并发数，支持批量处理
-- 🌐 **局域网访问** - 支持多设备访问，手机、平板、电脑都能使用
-- 📊 **实时进度跟踪** - 详细的处理状态和进度显示
-- 🛡️ **类型安全** - 使用Pydantic进行强类型验证
-- 📖 **自动文档** - 自动生成API文档和交互式界面
-- 🔧 **一键安装** - 自动安装Real-ESRGAN和所有依赖
+- 🚀 **高性能处理**：基于Real-ESRGAN的AI图片放大，处理速度0.1-0.3秒
+- 🏗️ **现代化架构**：企业级Python项目结构，模块化设计
+- 🔒 **类型安全**：完整的Pydantic v2数据验证和配置管理
+- 📊 **系统监控**：GPU状态、内存使用、任务队列实时监控
+- 📚 **自动文档**：FastAPI自动生成的交互式API文档
+- 🔧 **灵活配置**：支持环境变量和配置文件
+- 🛡️ **错误处理**：完整的异常处理体系
+- 🌐 **CORS支持**：跨域资源共享配置
 
-## 🎯 性能表现
+## 🛠️ 技术栈
 
-### RTX 4090 测试数据
-- **处理速度**: 最高3.88张/秒（4并发）
-- **显存占用**: 4.9GB稳定运行
-- **处理能力**: 每小时~13,800张图片
-- **GPU温度**: 48°C稳定运行
+- **框架**: FastAPI + Uvicorn
+- **AI模型**: Real-ESRGAN (RealESRGAN_x4plus_anime_6B)
+- **数据验证**: Pydantic v2 + pydantic-settings
+- **图像处理**: OpenCV + Pillow
+- **深度学习**: PyTorch + TorchVision
+- **系统监控**: psutil
+- **开发工具**: Black + isort + MyPy + Pytest
 
-## 🚀 快速开始
+## 📦 安装
 
-### 📋 系统要求
+### 环境要求
 
-#### 硬件要求
-- **GPU**: NVIDIA显卡（推荐RTX 4090/3080/2080Ti）
-- **显存**: 最少4GB，推荐8GB以上
-- **内存**: 最少8GB，推荐16GB以上
-- **存储**: 至少10GB可用空间
+- Python 3.8+
+- CUDA 11.8+ (推荐使用GPU)
+- 8GB+ RAM
+- 4GB+ GPU显存 (使用GPU时)
 
-#### 软件要求
-- **操作系统**: Windows 10/11, Linux, macOS
-- **Python**: 3.8+
-- **CUDA**: 11.0+
+### 快速开始
 
-### 🔧 安装步骤
-
-#### 1. 克隆项目（包含Real-ESRGAN）
+1. **克隆项目**
 ```bash
-git clone --recursive https://github.com/RuthlessXdream/anime-image-upscaler-api.git
+git clone --recursive https://github.com/your-username/anime-image-upscaler-api.git
 cd anime-image-upscaler-api
 ```
 
-#### 2. 设置Python环境
+2. **安装依赖**
 ```bash
-# 创建conda环境（推荐）
-conda create -n anime_upscale python=3.8
-conda activate anime_upscale
+# 基础依赖
+pip install -r requirements/base.txt
 
-# 或使用venv
-python -m venv anime_upscale
-source anime_upscale/bin/activate  # Linux/macOS
-# anime_upscale\Scripts\activate  # Windows
-```
+# 开发依赖 (可选)
+pip install -r requirements/dev.txt
 
-#### 3. 安装项目依赖
-```bash
-pip install -r requirements.txt
-```
-
-#### 4. 一键安装Real-ESRGAN（推荐）
-```bash
+# 安装Real-ESRGAN依赖
 python install_dependencies.py
 ```
 
-#### 或手动安装Real-ESRGAN
+3. **下载AI模型**
 ```bash
-cd Real-ESRGAN
-pip install basicsr facexlib gfpgan
-pip install -r requirements.txt
-python setup.py develop
-
-# 下载动漫专用模型
-wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.2.4/RealESRGAN_x4plus_anime_6B.pth -P weights/
-cd ..
+# 模型会自动下载到 Real-ESRGAN/weights/ 目录
+python -c "from scripts.download_models import download_model; download_model()"
 ```
 
-#### 5. 启动服务
+4. **启动服务**
 ```bash
-python start_server.py
+# 使用现代化启动脚本
+python start_modern.py
+
+# 或使用传统方式
+uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
 ```
 
-### 🌐 配置局域网访问（可选）
+## 🚀 使用指南
 
-#### Windows用户
+### API文档
+
+启动服务后访问：
+- **Swagger UI**: http://localhost:8001/docs
+- **ReDoc**: http://localhost:8001/redoc
+
+### 基本使用
+
+#### 图片放大
 ```bash
-# 以管理员身份运行
-setup_firewall.bat
+curl -X POST "http://localhost:8001/upscale" \
+     -H "Content-Type: multipart/form-data" \
+     -F "file=@your_image.jpg"
 ```
 
-#### Linux/macOS用户
+#### 健康检查
 ```bash
-# 开放端口8000
-sudo ufw allow 8000  # Ubuntu
-sudo firewall-cmd --add-port=8000/tcp --permanent  # CentOS
+curl http://localhost:8001/health
 ```
 
-## 📱 使用方法
+#### 系统状态
+```bash
+curl http://localhost:8001/system/status
+```
 
-### 🖥️ Web界面访问
-- **本地访问**: http://localhost:8000/docs
-- **局域网访问**: http://[你的IP]:8000/docs
+### Python客户端示例
 
-### 🔌 API调用示例
-
-#### Python
 ```python
 import requests
 
-# 上传图片
-with open('anime.jpg', 'rb') as f:
+# 上传图片进行放大
+with open("anime.jpg", "rb") as f:
     response = requests.post(
-        'http://localhost:8000/upscale',
-        files={'file': f}
+        "http://localhost:8001/upscale",
+        files={"file": f}
     )
-task_id = response.json()['task_id']
+    
+result = response.json()
+task_id = result["task_id"]
 
-# 查询状态
-status = requests.get(f'http://localhost:8000/status/{task_id}')
-print(status.json())
-
-# 下载结果
-result = requests.get(f'http://localhost:8000/download/{task_id}')
-with open('result.jpg', 'wb') as f:
-    f.write(result.content)
+# 下载处理结果
+download_response = requests.get(f"http://localhost:8001/download/{task_id}")
+with open("upscaled_anime.jpg", "wb") as f:
+    f.write(download_response.content)
 ```
 
-#### cURL
-```bash
-# 上传图片
-curl -X POST "http://localhost:8000/upscale" \
-     -H "Content-Type: multipart/form-data" \
-     -F "file=@anime.jpg"
-
-# 查询状态
-curl "http://localhost:8000/status/YOUR_TASK_ID"
-
-# 下载结果
-curl -O "http://localhost:8000/download/YOUR_TASK_ID"
-```
-
-## 🛠️ 工具集合
-
-### 🚀 启动和管理
-- `start_server.py` - 启动API服务
-- `install_dependencies.py` - 一键安装Real-ESRGAN
-- `setup_firewall.bat` - 配置Windows防火墙
-- `network_test.py` - 网络连接测试
-
-### 🧪 测试工具
-- `test_client.py` - 基础API测试和功能验证
-
-### 📦 批量处理
-- `batch_processor.py` - 批量图片处理（保持目录结构）
-
-## 📊 API接口文档
-
-### 核心接口
-| 接口 | 方法 | 描述 |
-|-----|------|------|
-| `/upscale` | POST | 上传图片进行处理 |
-| `/status/{task_id}` | GET | 查询任务状态 |
-| `/download/{task_id}` | GET | 下载处理结果 |
-| `/health` | GET | 健康检查 |
-| `/system` | GET | 系统状态信息 |
-
-### 管理接口
-| 接口 | 方法 | 描述 |
-|-----|------|------|
-| `/tasks` | GET | 列出所有任务 |
-| `/task/{task_id}` | DELETE | 删除任务 |
-
-## 🏗️ 项目结构
+## 📁 项目结构
 
 ```
 anime-image-upscaler-api/
-├── Real-ESRGAN/              # Real-ESRGAN子模块（AI模型核心）
-├── main.py                   # FastAPI服务端
-├── start_server.py          # 启动脚本
-├── install_dependencies.py  # 一键安装脚本
-├── requirements.txt         # Python依赖
-├── batch_processor.py       # 批量处理工具
-├── test_client.py          # 测试客户端
-├── network_test.py         # 网络诊断
-├── setup_firewall.bat      # Windows防火墙配置
-└── docs/                   # 文档目录
-    ├── README.md           # 项目说明
-    ├── CONTRIBUTING.md     # 贡献指南
-    └── DEPLOYMENT.md       # 部署指南
+├── app/                    # 主应用目录
+│   ├── __init__.py
+│   ├── main.py            # FastAPI应用入口
+│   ├── config.py          # Pydantic配置管理
+│   ├── models/            # 数据模型
+│   │   ├── request.py     # 请求模型
+│   │   ├── response.py    # 响应模型
+│   │   └── task.py        # 任务状态模型
+│   ├── api/v1/            # API路由
+│   │   ├── health.py      # 健康检查
+│   │   ├── system.py      # 系统状态
+│   │   └── upscale.py     # 图片处理
+│   ├── core/              # 核心业务逻辑
+│   │   └── model_manager.py # AI模型管理
+│   └── utils/             # 工具模块
+│       └── exceptions.py  # 自定义异常
+├── Real-ESRGAN/           # Real-ESRGAN子模块
+├── requirements/          # 依赖管理
+│   ├── base.txt          # 基础依赖
+│   └── dev.txt           # 开发依赖
+├── pyproject.toml         # 项目配置
+├── start_modern.py        # 现代化启动脚本
+└── README.md
 ```
 
-## 🔧 配置和优化
+## ⚙️ 配置
 
-### GPU并发优化
-系统会根据GPU显存自动调整并发数：
-- **24GB+**: 4个并发任务
-- **12GB+**: 3个并发任务  
-- **8GB+**: 2个并发任务
-- **4GB+**: 1个并发任务
+### 环境变量
 
-### 自定义配置
-```python
-# 在main.py中修改
-MAX_WORKERS = 2  # 手动设置并发数
+创建 `.env` 文件：
+
+```env
+# 应用配置
+APP_NAME=动漫图片高清修复API
+APP_VERSION=2.0.0
+DEBUG=false
+
+# 服务器配置
+HOST=0.0.0.0
+PORT=8001
+RELOAD=false
+
+# AI模型配置
+MODEL_NAME=RealESRGAN_x4plus_anime_6B.pth
+MODEL_SCALE=4
+USE_HALF_PRECISION=true
+
+# GPU配置
+GPU_ID=0
+MEMORY_THRESHOLD=0.8
+
+# 文件配置
+MAX_FILE_SIZE=52428800  # 50MB
+ALLOWED_EXTENSIONS=[".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"]
+
+# 日志配置
+LOG_LEVEL=INFO
 ```
 
-## 🛠️ 故障排除
+### 高级配置
 
-<details>
-<summary><strong>常见问题解决</strong></summary>
+所有配置项都支持通过环境变量或配置文件设置，详见 `app/config.py`。
 
-### 安装问题
-- **子模块未下载**: 运行 `git submodule update --init --recursive`
-- **依赖安装失败**: 运行 `python install_dependencies.py`
-- **模型下载失败**: 手动下载模型到 `Real-ESRGAN/weights/` 目录
+## 📊 性能指标
 
-### GPU相关问题
-- **CUDA out of memory**: 降低并发数或重启服务
-- **模型加载失败**: 检查模型文件路径和权限
-- **GPU不可用**: 确认CUDA和PyTorch安装正确
+### 处理速度
+- **小图片** (512x512): ~0.1-0.2秒
+- **中等图片** (1024x1024): ~0.3-0.5秒
+- **大图片** (2048x2048): ~1-2秒
 
-### 网络访问问题
-- **局域网无法访问**: 运行`python network_test.py`诊断
-- **防火墙阻止**: 运行`setup_firewall.bat`（Windows）
-- **端口占用**: 更改端口或关闭占用程序
+### 系统要求
+- **GPU显存**: 4GB+ (推荐8GB+)
+- **内存**: 8GB+ (推荐16GB+)
+- **存储**: 2GB+ (模型文件约400MB)
 
-</details>
+## 🔧 开发
+
+### 代码格式化
+```bash
+# 格式化代码
+black app/
+isort app/
+
+# 类型检查
+mypy app/
+
+# 运行测试
+pytest
+```
+
+### 开发模式启动
+```bash
+python start_modern.py
+# 或
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
+```
+
+## 🐳 Docker部署
+
+```dockerfile
+FROM python:3.10-slim
+
+WORKDIR /app
+COPY . .
+
+RUN pip install -r requirements/base.txt
+RUN python install_dependencies.py
+
+EXPOSE 8001
+CMD ["python", "start_modern.py"]
+```
 
 ## 🤝 贡献
 
-我们欢迎所有形式的贡献！请查看 [CONTRIBUTING.md](CONTRIBUTING.md) 了解详细信息。
-
-### 开发重点
-- 🔧 性能优化和GPU内存管理
-- 🌐 多语言支持
-- 📱 Web界面开发
-- 🔍 更多图片格式支持
-
-## 📝 更新日志
-
-### v1.2.0 (最新)
-- ✅ 集成Real-ESRGAN作为子模块
-- ✅ 添加一键安装脚本
-- ✅ 简化安装流程
-- ✅ 优化项目结构
-- ✅ 移除不必要的测试文件
-
-### v1.1.0
-- ✅ 新增局域网访问支持
-- ✅ 修复Pydantic模型警告
-- ✅ 过滤torchvision废弃警告
-- ✅ 添加防火墙配置脚本
-- ✅ 添加网络连接测试工具
-
-### v1.0.0
-- ✅ 基础API服务功能
-- ✅ GPU加速处理
-- ✅ 并发处理支持
-- ✅ 批量处理工具
+1. Fork 项目
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 打开 Pull Request
 
 ## 📄 许可证
 
-本项目基于 [MIT License](LICENSE) 开源。
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
 
 ## 🙏 致谢
 
-- [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) - 提供强大的AI超分辨率算法
+- [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) - 强大的图像超分辨率模型
 - [FastAPI](https://fastapi.tiangolo.com/) - 现代化的Python Web框架
-- 所有贡献者和使用者的支持
+- [Pydantic](https://pydantic.dev/) - 数据验证和设置管理
 
 ## 📞 支持
 
-如果您遇到问题或有建议：
-1. 查看 [Issues](https://github.com/RuthlessXdream/anime-image-upscaler-api/issues)
-2. 创建新的Issue
-3. 运行`python network_test.py`进行诊断
+如果您遇到问题或有建议，请：
+- 创建 [Issue](https://github.com/your-username/anime-image-upscaler-api/issues)
+- 发送邮件至: your-email@example.com
 
 ---
 
-⭐ 如果这个项目对您有帮助，请给我们一个Star！ 
+⭐ 如果这个项目对您有帮助，请给它一个星标！ 

@@ -157,7 +157,7 @@ def initialize_model():
         logger.info("正在初始化Real-ESRGAN模型...")
         
         # 设置模型路径
-        model_path = Path(__file__).parent.parent / "Real-ESRGAN" / "weights" / "RealESRGAN_x4plus_anime_6B.pth"
+        model_path = Path(__file__).parent / "Real-ESRGAN" / "weights" / "RealESRGAN_x4plus_anime_6B.pth"
         
         # 创建模型
         model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=6, num_grow_ch=32, scale=4)

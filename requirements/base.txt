@@ -1,0 +1,23 @@
+# 基础依赖
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.4.0
+pydantic-settings>=2.0.0
+
+# 图像处理
+opencv-python>=4.8.0
+Pillow>=10.0.0
+
+# AI/ML
+torch>=2.0.0
+torchvision>=0.15.0
+basicsr>=1.4.2
+
+# 系统监控
+psutil>=5.9.0
+
+# 文件处理
+python-multipart>=0.0.6
+
+# 工具库
+python-dotenv>=1.0.0 
