@@ -19,6 +19,8 @@ from .models.response import ErrorResponse
 
 # 过滤警告
 warnings.filterwarnings("ignore", category=UserWarning, module="torchvision.transforms.functional_tensor")
+warnings.filterwarnings("ignore", message=".*torchvision.transforms.functional_tensor.*")
+warnings.filterwarnings("ignore", message=".*deprecated.*", module="torchvision.*")
 
 # 配置日志
 logging.basicConfig(

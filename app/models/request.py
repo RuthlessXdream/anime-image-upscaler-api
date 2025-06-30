@@ -63,7 +63,7 @@ class UpscaleRequest(BaseModel):
         return v
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "ai_model_name": "RealESRGAN_x4plus_anime_6B",
                 "outscale": 4.0,

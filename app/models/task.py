@@ -136,7 +136,7 @@ class TaskStatus(BaseModel):
     
     class Config:
         use_enum_values = True
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "task_id": "123e4567-e89b-12d3-a456-426614174000",
                 "status": "processing",

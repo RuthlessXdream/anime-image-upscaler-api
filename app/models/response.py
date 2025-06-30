@@ -28,7 +28,7 @@ class UpscaleResponse(BaseModel):
     )
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "task_id": "123e4567-e89b-12d3-a456-426614174000",
                 "status": "pending",

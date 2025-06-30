@@ -5,7 +5,7 @@
 
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from pydantic import Field, validator
 from pydantic_settings import BaseSettings
@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     
     # 服务器配置
     host: str = Field(default="0.0.0.0", description="服务器地址")
-    port: int = Field(default=8000, description="服务器端口")
+    port: int = Field(default=7999, description="服务器端口")
     reload: bool = Field(default=False, description="自动重载")
     
     # 文件路径配置
@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     pre_pad: int = Field(default=0, description="预填充")
     
     # 并发配置
-    max_workers: Optional[int] = Field(default=None, description="最大工作进程数")
+    max_workers: Optional[int] = Field(default=2, description="最大工作进程数")
     auto_detect_workers: bool = Field(default=True, description="自动检测工作进程数")
     
     # GPU配置
@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     max_file_size: int = Field(default=50 * 1024 * 1024, description="最大文件大小(字节)")
     
     # 支持的文件格式
-    allowed_extensions: List[str] = Field(
+    allowed_extensions: Union[List[str], str] = Field(
         default=[".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"],
         description="允许的文件扩展名"
     )
@@ -62,7 +62,7 @@ class Settings(BaseSettings):
     log_file: Optional[str] = Field(default=None, description="日志文件路径")
     
     # CORS配置
-    cors_origins: List[str] = Field(default=["*"], description="CORS允许的源")
+    cors_origins: Union[List[str], str] = Field(default=["*"], description="CORS允许的源")
     
     @validator("upload_dir", "output_dir", "model_dir", pre=True)
     def resolve_paths(cls, v, values):
@@ -74,10 +74,23 @@ class Settings(BaseSettings):
             v = project_root / v
         return v
     
-    @validator("allowed_extensions")
-    def validate_extensions(cls, v):
-        """确保扩展名以点开头"""
+    @validator("allowed_extensions", pre=True)
+    def parse_extensions(cls, v):
+        """解析逗号分隔的扩展名"""
+        if isinstance(v, str):
+            v = [ext.strip() for ext in v.split(',') if ext.strip()]
+        elif not isinstance(v, list):
+            v = [".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"]
         return [ext if ext.startswith('.') else f'.{ext}' for ext in v]
+    
+    @validator("cors_origins", pre=True)
+    def parse_cors_origins(cls, v):
+        """解析逗号分隔的CORS源"""
+        if isinstance(v, str):
+            v = [origin.strip() for origin in v.split(',') if origin.strip()]
+        elif not isinstance(v, list):
+            v = ["*"]
+        return v
     
     @property
     def model_path(self) -> Path:
@@ -90,7 +103,7 @@ class Settings(BaseSettings):
         self.output_dir.mkdir(parents=True, exist_ok=True)
     
     class Config:
-        env_file = ".env"
+        env_file = ["config.env", ".env"]
         env_file_encoding = "utf-8"
         case_sensitive = False
 
