@@ -1,209 +1,210 @@
-# 🎨 现代化动漫图片高清修复API
+# 🎨 动漫图像高清修复API
 
-基于Real-ESRGAN的高性能动漫图片四倍放大和高清修复服务，采用现代化Python架构重构。
+基于Real-ESRGAN的高性能动漫图像4x放大和高清修复服务，采用现代化Python架构和Docker容器化部署。
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104%2B-green.svg)](https://fastapi.tiangolo.com)
-[![Pydantic](https://img.shields.io/badge/Pydantic-v2-red.svg)](https://pydantic.dev)
+[![Docker](https://img.shields.io/badge/Docker-支持-blue.svg)](https://docker.com)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## ✨ 特性
 
-- 🚀 **高性能处理**：基于Real-ESRGAN的AI图片放大，处理速度0.1-0.3秒
-- 🏗️ **现代化架构**：企业级Python项目结构，模块化设计
-- 🔒 **类型安全**：完整的Pydantic v2数据验证和配置管理
-- 📊 **系统监控**：GPU状态、内存使用、任务队列实时监控
-- 📚 **自动文档**：FastAPI自动生成的交互式API文档
-- 🔧 **灵活配置**：支持环境变量和配置文件
-- 🛡️ **错误处理**：完整的异常处理体系
-- 🌐 **CORS支持**：跨域资源共享配置
+- 🚀 **AI图像放大**：基于Real-ESRGAN的动漫图像4x超分辨率处理
+- 🐳 **容器化部署**：支持Docker一键启动，GPU/CPU双模式
+- 🏗️ **现代化架构**：FastAPI + Pydantic v2，企业级代码结构
+- 📊 **实时监控**：GPU状态、内存使用、任务队列监控
+- 📚 **自动文档**：Swagger UI交互式API文档
+- 🔧 **灵活配置**：统一配置文件管理，支持环境变量
+- 🛡️ **健壮性**：完整的异常处理和错误恢复机制
+- 🌐 **跨域支持**：CORS配置，支持前端集成
 
-## 🛠️ 技术栈
+## 🚀 快速开始
 
-- **框架**: FastAPI + Uvicorn
-- **AI模型**: Real-ESRGAN (RealESRGAN_x4plus_anime_6B)
-- **数据验证**: Pydantic v2 + pydantic-settings
-- **图像处理**: OpenCV + Pillow
-- **深度学习**: PyTorch + TorchVision
-- **系统监控**: psutil
-- **开发工具**: Black + isort + MyPy + Pytest
+### 🐳 Docker一键启动（推荐）
 
-## 📦 安装
-
-### 环境要求
-
-- Python 3.8+
-- CUDA 11.8+ (推荐使用GPU)
-- 8GB+ RAM
-- 4GB+ GPU显存 (使用GPU时)
-
-### 快速开始
-
-1. **克隆项目**
+**1. 克隆项目**
 ```bash
-git clone --recursive https://github.com/your-username/anime-image-upscaler-api.git
+git clone --recursive https://github.com/RuthlessXdream/anime-image-upscaler-api.git
 cd anime-image-upscaler-api
 ```
 
-2. **安装依赖**
+**2. 配置服务**
 ```bash
-# 基础依赖
-pip install -r requirements/base.txt
-
-# 开发依赖 (可选)
-pip install -r requirements/dev.txt
-
-# 安装Real-ESRGAN依赖
-python install_dependencies.py
+# 编辑配置文件（可选）
+cp config.env.example config.env
+nano config.env  # 修改端口、模型等配置
 ```
 
-3. **下载AI模型**
+**3. 一键启动**
 ```bash
-# 模型会自动下载到 Real-ESRGAN/weights/ 目录
-python -c "from scripts.download_models import download_model; download_model()"
+# GPU版本（推荐，需要NVIDIA GPU + CUDA支持）
+sudo docker-compose up --build -d
+
+# CPU版本（适用于无GPU环境）
+sudo docker-compose -f docker-compose.cpu.yml up --build -d
 ```
 
-4. **启动服务**
+**4. 验证服务**
 ```bash
-# 使用现代化启动脚本
+# 检查服务状态
+curl http://localhost:3005/health
+
+# 访问API文档
+# 浏览器打开: http://localhost:3005/docs
+```
+
+### 📦 传统安装方式
+
+<details>
+<summary>点击展开传统安装步骤</summary>
+
+#### 环境要求
+- Python 3.8+
+- CUDA 11.8+ (GPU版本)
+- 8GB+ RAM
+- 4GB+ GPU显存 (GPU版本)
+
+#### 安装步骤
+```bash
+# 1. 克隆项目
+git clone --recursive https://github.com/RuthlessXdream/anime-image-upscaler-api.git
+cd anime-image-upscaler-api
+
+# 2. 创建虚拟环境
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# venv\Scripts\activate   # Windows
+
+# 3. 安装依赖
+pip install -r requirements.txt
+
+# 4. 启动服务
 python start_modern.py
+```
+</details>
 
-# 或使用传统方式
-uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+## 🛠️ 配置说明
+
+### 主要配置项
+
+编辑 `config.env` 文件：
+
+```env
+# 服务器配置
+HOST=0.0.0.0
+PORT=3005                    # 服务端口
+DEBUG=false
+
+# AI模型配置
+MODEL_NAME=RealESRGAN_x4plus_anime_6B.pth
+MODEL_SCALE=4                # 放大倍数
+USE_HALF_PRECISION=true      # 半精度加速（GPU）
+
+# 性能配置
+MAX_WORKERS=2                # 并发处理数
+AUTO_DETECT_WORKERS=true     # 自动检测CPU核心数
+TASK_TIMEOUT=300            # 任务超时时间（秒）
+
+# 文件配置
+MAX_FILE_SIZE=52428800      # 最大文件大小（50MB）
+ALLOWED_EXTENSIONS=.jpg,.jpeg,.png,.bmp,.tiff,.webp
 ```
 
-## 🚀 使用指南
+### GPU vs CPU 模式选择
 
-### API文档
+| 特性 | GPU模式 | CPU模式 |
+|------|---------|---------|
+| **性能** | 快速（0.1-0.5秒） | 较慢（2-10秒） |
+| **内存需求** | 4GB+ GPU显存 | 8GB+ 系统内存 |
+| **适用场景** | 生产环境、高并发 | 开发测试、无GPU环境 |
+| **启动命令** | `docker-compose up -d` | `docker-compose -f docker-compose.cpu.yml up -d` |
 
-启动服务后访问：
-- **Swagger UI**: http://localhost:8001/docs
-- **ReDoc**: http://localhost:8001/redoc
+## 📖 API使用指南
 
-### 基本使用
+### 接口文档
+- **Swagger UI**: http://localhost:3005/docs
+- **ReDoc**: http://localhost:3005/redoc
+- **健康检查**: http://localhost:3005/health
 
-#### 图片放大
+### 基础API调用
+
+#### 1. 图像放大
 ```bash
-curl -X POST "http://localhost:8001/upscale" \
+curl -X POST "http://localhost:3005/api/v1/upscale" \
      -H "Content-Type: multipart/form-data" \
-     -F "file=@your_image.jpg"
+     -F "file=@anime.jpg"
 ```
 
-#### 健康检查
+#### 2. 系统状态
 ```bash
-curl http://localhost:8001/health
+curl http://localhost:3005/api/v1/system/status
 ```
 
-#### 系统状态
-```bash
-curl http://localhost:8001/system/status
-```
-
-### Python客户端示例
-
+#### 3. Python客户端示例
 ```python
 import requests
 
-# 上传图片进行放大
-with open("anime.jpg", "rb") as f:
-    response = requests.post(
-        "http://localhost:8001/upscale",
-        files={"file": f}
-    )
+# 上传并处理图像
+def upscale_image(image_path, api_url="http://localhost:3005"):
+    with open(image_path, "rb") as f:
+        response = requests.post(
+            f"{api_url}/api/v1/upscale",
+            files={"file": f}
+        )
     
-result = response.json()
-task_id = result["task_id"]
+    if response.status_code == 200:
+        # 直接返回处理后的图像数据
+        with open("upscaled_image.jpg", "wb") as f:
+            f.write(response.content)
+        print("图像处理完成！")
+    else:
+        print(f"处理失败: {response.json()}")
 
-# 下载处理结果
-download_response = requests.get(f"http://localhost:8001/download/{task_id}")
-with open("upscaled_anime.jpg", "wb") as f:
-    f.write(download_response.content)
+# 使用示例
+upscale_image("input_anime.jpg")
 ```
 
 ## 📁 项目结构
 
 ```
 anime-image-upscaler-api/
-├── app/                    # 主应用目录
-│   ├── __init__.py
-│   ├── main.py            # FastAPI应用入口
-│   ├── config.py          # Pydantic配置管理
-│   ├── models/            # 数据模型
-│   │   ├── request.py     # 请求模型
-│   │   ├── response.py    # 响应模型
-│   │   └── task.py        # 任务状态模型
-│   ├── api/v1/            # API路由
-│   │   ├── health.py      # 健康检查
-│   │   ├── system.py      # 系统状态
-│   │   └── upscale.py     # 图片处理
-│   ├── core/              # 核心业务逻辑
-│   │   └── model_manager.py # AI模型管理
-│   └── utils/             # 工具模块
-│       └── exceptions.py  # 自定义异常
-├── Real-ESRGAN/           # Real-ESRGAN子模块
-├── requirements/          # 依赖管理
-│   ├── base.txt          # 基础依赖
-│   └── dev.txt           # 开发依赖
-├── pyproject.toml         # 项目配置
-├── start_modern.py        # 现代化启动脚本
-└── README.md
+├── 🐳 Docker配置
+│   ├── docker-compose.yml         # GPU版本部署
+│   ├── docker-compose.cpu.yml     # CPU版本部署
+│   ├── Dockerfile                 # GPU镜像构建
+│   ├── Dockerfile.cpu            # CPU镜像构建
+│   └── docker-entrypoint.sh      # 容器启动脚本
+├── 📱 应用核心
+│   ├── app/
+│   │   ├── main.py               # FastAPI应用入口
+│   │   ├── api/v1/               # API路由版本管理
+│   │   ├── core/                 # 核心业务逻辑
+│   │   ├── models/               # 数据模型定义
+│   │   └── utils/                # 工具函数
+│   └── Real-ESRGAN/              # AI模型子模块
+├── ⚙️ 配置管理
+│   ├── config.env                # 主配置文件
+│   ├── config_manager.py         # 配置管理器
+│   └── requirements.txt          # Python依赖
+├── 📂 运行时目录
+│   ├── uploads/                  # 上传文件临时存储
+│   ├── outputs/                  # 处理结果输出
+│   └── Real-ESRGAN/weights/      # AI模型文件
+└── 📚 文档脚本
+    ├── README.md                 # 项目说明
+    ├── DEPLOYMENT.md             # 部署指南
+    ├── CONFIG_GUIDE.md           # 配置说明
+    └── scripts/                  # 辅助脚本
 ```
 
-## ⚙️ 配置
+## 🔧 开发与部署
 
-### 环境变量
-
-创建 `.env` 文件：
-
-```env
-# 应用配置
-APP_NAME=动漫图片高清修复API
-APP_VERSION=2.0.0
-DEBUG=false
-
-# 服务器配置
-HOST=0.0.0.0
-PORT=8001
-RELOAD=false
-
-# AI模型配置
-MODEL_NAME=RealESRGAN_x4plus_anime_6B.pth
-MODEL_SCALE=4
-USE_HALF_PRECISION=true
-
-# GPU配置
-GPU_ID=0
-MEMORY_THRESHOLD=0.8
-
-# 文件配置
-MAX_FILE_SIZE=52428800  # 50MB
-ALLOWED_EXTENSIONS=[".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"]
-
-# 日志配置
-LOG_LEVEL=INFO
-```
-
-### 高级配置
-
-所有配置项都支持通过环境变量或配置文件设置，详见 `app/config.py`。
-
-## 📊 性能指标
-
-### 处理速度
-- **小图片** (512x512): ~0.1-0.2秒
-- **中等图片** (1024x1024): ~0.3-0.5秒
-- **大图片** (2048x2048): ~1-2秒
-
-### 系统要求
-- **GPU显存**: 4GB+ (推荐8GB+)
-- **内存**: 8GB+ (推荐16GB+)
-- **存储**: 2GB+ (模型文件约400MB)
-
-## 🔧 开发
-
-### 代码格式化
+### 开发模式
 ```bash
-# 格式化代码
+# 启动开发服务器（热重载）
+python start_modern.py --reload
+
+# 代码格式化
 black app/
 isort app/
 
@@ -211,38 +212,128 @@ isort app/
 mypy app/
 
 # 运行测试
-pytest
+pytest tests/
 ```
 
-### 开发模式启动
+### 生产部署
 ```bash
-python start_modern.py
-# 或
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
+# 构建并启动生产环境
+sudo docker-compose up --build -d
+
+# 查看服务日志
+sudo docker-compose logs -f
+
+# 停止服务
+sudo docker-compose down
+
+# 更新服务
+git pull
+sudo docker-compose up --build -d
 ```
 
-## 🐳 Docker部署
+### 性能监控
+```bash
+# 实时查看系统状态
+curl http://localhost:3005/api/v1/system/status | jq
 
-```dockerfile
-FROM python:3.10-slim
-
-WORKDIR /app
-COPY . .
-
-RUN pip install -r requirements/base.txt
-RUN python install_dependencies.py
-
-EXPOSE 8001
-CMD ["python", "start_modern.py"]
+# 容器资源使用情况
+docker stats upscale_api-app-1
 ```
 
-## 🤝 贡献
+## 📊 性能指标
 
-1. Fork 项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开 Pull Request
+### 处理速度对比
+
+| 图像尺寸 | GPU模式 | CPU模式 | 内存使用 |
+|----------|---------|---------|----------|
+| 512×512 | 0.1-0.2s | 2-3s | 2GB |
+| 1024×1024 | 0.3-0.5s | 5-8s | 4GB |
+| 2048×2048 | 1-2s | 15-25s | 8GB |
+
+### 系统要求
+
+**最低配置**
+- CPU: 4核心
+- 内存: 8GB RAM
+- 存储: 5GB可用空间
+- 网络: 100Mbps
+
+**推荐配置**
+- CPU: 8核心+
+- 内存: 16GB+ RAM
+- GPU: 6GB+ VRAM (NVIDIA)
+- 存储: 10GB+ SSD
+- 网络: 1Gbps
+
+## 🐛 故障排除
+
+### 常见问题
+
+<details>
+<summary>Docker启动失败</summary>
+
+```bash
+# 检查Docker服务状态
+sudo systemctl status docker
+
+# 重启Docker服务
+sudo systemctl restart docker
+
+# 清理Docker缓存
+sudo docker system prune -a
+```
+</details>
+
+<details>
+<summary>GPU不可用</summary>
+
+```bash
+# 检查NVIDIA驱动
+nvidia-smi
+
+# 安装NVIDIA Container Toolkit
+sudo apt install nvidia-container-toolkit
+sudo systemctl restart docker
+```
+</details>
+
+<details>
+<summary>内存不足</summary>
+
+```bash
+# 减少并发处理数
+echo "MAX_WORKERS=1" >> config.env
+
+# 启用半精度模式
+echo "USE_HALF_PRECISION=true" >> config.env
+```
+</details>
+
+### 日志查看
+```bash
+# 查看应用日志
+sudo docker-compose logs app
+
+# 实时跟踪日志
+sudo docker-compose logs -f app
+
+# 查看系统资源
+curl http://localhost:3005/api/v1/system/status
+```
+
+## 🤝 贡献指南
+
+1. **Fork项目** - 点击右上角Fork按钮
+2. **创建分支** - `git checkout -b feature/amazing-feature`
+3. **提交更改** - `git commit -m 'Add amazing feature'`
+4. **推送分支** - `git push origin feature/amazing-feature`
+5. **创建PR** - 提交Pull Request
+
+### 开发规范
+- 遵循PEP 8代码风格
+- 添加类型注解
+- 编写单元测试
+- 更新相关文档
 
 ## 📄 许可证
 
@@ -250,16 +341,19 @@ CMD ["python", "start_modern.py"]
 
 ## 🙏 致谢
 
-- [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) - 强大的图像超分辨率模型
-- [FastAPI](https://fastapi.tiangolo.com/) - 现代化的Python Web框架
-- [Pydantic](https://pydantic.dev/) - 数据验证和设置管理
+- [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) - 强大的图像超分辨率AI模型
+- [FastAPI](https://fastapi.tiangolo.com/) - 现代化高性能Web框架
+- [Pydantic](https://pydantic.dev/) - 数据验证和配置管理
+- [Docker](https://docker.com) - 容器化部署解决方案
 
-## 📞 支持
+## 📞 支持与反馈
 
-如果您遇到问题或有建议，请：
-- 创建 [Issue](https://github.com/your-username/anime-image-upscaler-api/issues)
-- 发送邮件至: your-email@example.com
+- 🐛 **问题报告**: [GitHub Issues](https://github.com/RuthlessXdream/anime-image-upscaler-api/issues)
+- 💡 **功能建议**: [GitHub Discussions](https://github.com/RuthlessXdream/anime-image-upscaler-api/discussions)
+- 📧 **联系方式**: [创建Issue](https://github.com/RuthlessXdream/anime-image-upscaler-api/issues/new)
 
 ---
 
-⭐ 如果这个项目对您有帮助，请给它一个星标！ 
+⭐ **如果这个项目对您有帮助，请给它一个星标！**
+
+🚀 **快速体验**: `git clone --recursive https://github.com/RuthlessXdream/anime-image-upscaler-api.git && cd anime-image-upscaler-api && sudo docker-compose -f docker-compose.cpu.yml up -d` 

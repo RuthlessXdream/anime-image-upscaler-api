@@ -1,202 +1,501 @@
 # 🚀 部署指南
 
-本指南将帮助您将项目部署到GitHub并设置完整的开发环境。
+完整的动漫图像高清修复API部署指南，包含Docker容器化部署和传统部署方式。
 
 ## 📋 部署前准备
 
-### 1. 创建GitHub仓库
-1. 登录GitHub账户
-2. 创建新仓库：https://github.com/new
-3. 仓库名：`anime-image-upscaler-api`
-4. 设置为Public（推荐）或Private
-5. **不要**初始化README、.gitignore或LICENSE（我们已经准备好了）
+### 系统要求
 
-### 2. 配置Git
+**最低配置**
+- CPU: 4核心
+- 内存: 8GB RAM
+- 存储: 10GB可用空间
+- 操作系统: Ubuntu 18.04+, CentOS 7+, Windows 10+
+
+**推荐配置**
+- CPU: 8核心+
+- 内存: 16GB+ RAM
+- GPU: NVIDIA GPU (6GB+ VRAM)
+- 存储: 20GB+ SSD
+- 操作系统: Ubuntu 20.04+ LTS
+
+### 必需软件
+
+**Docker部署（推荐）**
 ```bash
-# 设置Git用户信息（如果还没设置）
-git config --global user.name "你的用户名"
-git config --global user.email "你的邮箱"
+# Ubuntu/Debian
+sudo apt update
+sudo apt install docker.io docker-compose git
 
-# 配置GitHub凭据（推荐使用Token）
-git config --global credential.helper store
+# CentOS/RHEL
+sudo yum install docker docker-compose git
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# 添加用户到docker组
+sudo usermod -aG docker $USER
+# 重新登录或执行: newgrp docker
 ```
 
-### 3. 获取GitHub Personal Access Token
-1. 访问：https://github.com/settings/tokens
-2. 点击"Generate new token (classic)"
-3. 选择权限：
-   - `repo` (完全控制私有仓库)
-   - `workflow` (更新GitHub Actions工作流)
-4. 复制生成的Token（只显示一次）
-
-## 🚀 快速部署
-
-### 方法一：使用自动化脚本（推荐）
+**GPU支持（可选但推荐）**
 ```bash
-# 在项目根目录运行
-init_git_repo.bat
+# 安装NVIDIA Container Toolkit
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+
+sudo apt update
+sudo apt install nvidia-container-toolkit
+sudo systemctl restart docker
 ```
 
-### 方法二：手动部署
+## 🐳 Docker部署（推荐）
+
+### 快速开始
+
+**1. 获取项目代码**
 ```bash
-# 1. 初始化Git仓库
-git init
+# 克隆项目（包含子模块）
+git clone --recursive https://github.com/RuthlessXdream/anime-image-upscaler-api.git
+cd anime-image-upscaler-api
 
-# 2. 添加所有文件
-git add .
-
-# 3. 创建初始提交
-git commit -m "feat: 初始化动漫图片高清修复API项目"
-
-# 4. 添加远程仓库
-git remote add origin https://github.com/RuthlessXdream/anime-image-upscaler-api.git
-
-# 5. 推送到GitHub
-git branch -M main
-git push -u origin main
+# 如果已克隆但缺少子模块
+git submodule update --init --recursive
 ```
 
-## 📦 项目结构说明
-
-部署到GitHub的文件结构：
-```
-anime-image-upscaler-api/
-├── .github/                    # GitHub配置
-│   ├── ISSUE_TEMPLATE/        # Issue模板
-│   │   ├── bug_report.md
-│   │   └── feature_request.md
-│   └── pull_request_template.md
-├── .gitignore                 # Git忽略文件
-├── LICENSE                    # MIT许可证
-├── README.md                  # 项目说明
-├── CONTRIBUTING.md            # 贡献指南
-├── DEPLOYMENT.md              # 部署指南（本文件）
-├── requirements.txt           # Python依赖
-├── main.py                    # 主API服务
-├── start_server.py           # 启动脚本
-├── setup_firewall.bat        # 防火墙配置
-├── network_test.py           # 网络测试
-├── test_client.py            # 基础测试客户端
-├── enhanced_test_client.py   # 增强测试客户端
-├── performance_test.py       # 性能测试
-├── batch_processor.py        # 批量处理工具
-└── init_git_repo.bat        # Git初始化脚本
-```
-
-## 🔧 部署后配置
-
-### 1. 设置GitHub Pages（可选）
-1. 进入仓库设置：`Settings` -> `Pages`
-2. Source选择：`Deploy from a branch`
-3. Branch选择：`main` / `(root)`
-4. 保存后可通过 `https://ruthlessxdream.github.io/anime-image-upscaler-api/` 访问
-
-### 2. 配置Issue和PR模板
-GitHub会自动识别`.github`目录下的模板文件：
-- Bug报告模板
-- 功能请求模板
-- Pull Request模板
-
-### 3. 设置仓库描述和标签
-在GitHub仓库页面：
-1. 点击右上角的⚙️图标
-2. 添加描述：`基于Real-ESRGAN的高性能动漫图片AI放大API服务`
-3. 添加标签：`python`, `fastapi`, `real-esrgan`, `ai`, `image-processing`, `gpu`, `anime`, `upscaling`
-4. 设置主页：`https://github.com/RuthlessXdream/anime-image-upscaler-api`
-
-## 📈 GitHub功能配置
-
-### 1. 启用Discussions（推荐）
-1. 进入仓库设置：`Settings` -> `Features`
-2. 勾选`Discussions`
-3. 用于社区讨论和问答
-
-### 2. 设置分支保护规则
-1. 进入：`Settings` -> `Branches`
-2. 添加规则保护`main`分支：
-   - Require pull request reviews
-   - Require status checks to pass
-   - Restrict pushes
-
-### 3. 配置安全设置
-1. 进入：`Settings` -> `Security & analysis`
-2. 启用：
-   - Dependency graph
-   - Dependabot alerts
-   - Dependabot security updates
-
-## 🔄 持续更新
-
-### 日常开发流程
+**2. 配置服务**
 ```bash
-# 1. 拉取最新代码
+# 复制配置文件模板
+cp config.env.example config.env
+
+# 编辑配置（可选）
+nano config.env
+```
+
+**3. 选择部署模式**
+
+**GPU模式（推荐）**
+```bash
+# 检查GPU可用性
+nvidia-smi
+
+# 启动GPU版本
+sudo docker-compose up --build -d
+
+# 查看启动日志
+sudo docker-compose logs -f app
+```
+
+**CPU模式**
+```bash
+# 适用于无GPU环境
+sudo docker-compose -f docker-compose.cpu.yml up --build -d
+
+# 查看启动日志
+sudo docker-compose -f docker-compose.cpu.yml logs -f app
+```
+
+**4. 验证部署**
+```bash
+# 检查服务状态
+curl http://localhost:3005/health
+
+# 查看容器状态
+docker ps
+
+# 访问API文档
+# 浏览器打开: http://localhost:3005/docs
+```
+
+### Docker部署管理
+
+**服务管理**
+```bash
+# 查看服务状态
+sudo docker-compose ps
+
+# 停止服务
+sudo docker-compose down
+
+# 重启服务
+sudo docker-compose restart
+
+# 查看日志
+sudo docker-compose logs -f app
+
+# 进入容器调试
+sudo docker-compose exec app bash
+```
+
+**更新部署**
+```bash
+# 拉取最新代码
 git pull origin main
+git submodule update --recursive
 
-# 2. 创建功能分支
-git checkout -b feature/new-feature
-
-# 3. 开发和提交
-git add .
-git commit -m "feat: 添加新功能"
-
-# 4. 推送分支
-git push origin feature/new-feature
-
-# 5. 在GitHub创建Pull Request
+# 重新构建并启动
+sudo docker-compose down
+sudo docker-compose up --build -d
 ```
 
-### 版本发布
+**清理资源**
 ```bash
-# 1. 更新版本号（在main.py中）
-# 2. 创建标签
-git tag -a v1.2.0 -m "Release v1.2.0"
-git push origin v1.2.0
+# 停止并删除容器
+sudo docker-compose down -v
 
-# 3. 在GitHub创建Release
+# 清理未使用的镜像
+sudo docker system prune -a
+
+# 清理所有Docker资源（谨慎使用）
+sudo docker system prune -a --volumes
+```
+
+## 📦 传统部署方式
+
+<details>
+<summary>点击展开传统部署步骤</summary>
+
+### 环境准备
+
+**Python环境**
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install python3.8 python3.8-venv python3.8-dev python3-pip
+
+# CentOS/RHEL
+sudo yum install python38 python38-devel python38-pip
+
+# 创建虚拟环境
+python3.8 -m venv venv
+source venv/bin/activate  # Linux/Mac
+# venv\Scripts\activate   # Windows
+```
+
+**系统依赖**
+```bash
+# Ubuntu/Debian
+sudo apt install build-essential cmake libopencv-dev
+
+# CentOS/RHEL
+sudo yum groupinstall "Development Tools"
+sudo yum install cmake opencv-devel
+```
+
+### 安装部署
+
+```bash
+# 1. 克隆项目
+git clone --recursive https://github.com/RuthlessXdream/anime-image-upscaler-api.git
+cd anime-image-upscaler-api
+
+# 2. 激活虚拟环境
+source venv/bin/activate
+
+# 3. 安装依赖
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# 4. 配置环境
+cp config.env.example config.env
+# 编辑 config.env 文件
+
+# 5. 启动服务
+python start_modern.py
+```
+
+### 系统服务配置
+
+**创建systemd服务**
+```bash
+sudo nano /etc/systemd/system/upscale-api.service
+```
+
+```ini
+[Unit]
+Description=Anime Image Upscaler API
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/anime-image-upscaler-api
+Environment=PATH=/home/ubuntu/anime-image-upscaler-api/venv/bin
+ExecStart=/home/ubuntu/anime-image-upscaler-api/venv/bin/python start_modern.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**启用服务**
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable upscale-api
+sudo systemctl start upscale-api
+sudo systemctl status upscale-api
+```
+
+</details>
+
+## 🌐 反向代理配置
+
+### Nginx配置
+
+**安装Nginx**
+```bash
+# Ubuntu/Debian
+sudo apt install nginx
+
+# CentOS/RHEL
+sudo yum install nginx
+```
+
+**配置文件**
+```bash
+sudo nano /etc/nginx/sites-available/upscale-api
+```
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;  # 替换为您的域名
+
+    client_max_body_size 100M;   # 允许大文件上传
+
+    location / {
+        proxy_pass http://127.0.0.1:3005;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # 长连接支持
+        proxy_read_timeout 300;
+        proxy_connect_timeout 300;
+        proxy_send_timeout 300;
+    }
+}
+```
+
+**启用配置**
+```bash
+sudo ln -s /etc/nginx/sites-available/upscale-api /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+### SSL证书配置
+
+**使用Let's Encrypt**
+```bash
+# 安装Certbot
+sudo apt install certbot python3-certbot-nginx
+
+# 获取证书
+sudo certbot --nginx -d your-domain.com
+
+# 自动续期
+sudo crontab -e
+# 添加: 0 12 * * * /usr/bin/certbot renew --quiet
+```
+
+## 🔧 生产环境优化
+
+### 性能调优
+
+**Docker资源限制**
+```yaml
+# docker-compose.yml
+services:
+  app:
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
+          cpus: '2.0'
+          memory: 4G
+```
+
+**系统参数优化**
+```bash
+# 增加文件描述符限制
+echo "* soft nofile 65536" | sudo tee -a /etc/security/limits.conf
+echo "* hard nofile 65536" | sudo tee -a /etc/security/limits.conf
+
+# 内核参数优化
+echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
+```
+
+### 监控配置
+
+**Docker健康检查**
+```bash
+# 查看容器健康状态
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+# 监控资源使用
+docker stats upscale_api-app-1
+```
+
+**日志管理**
+```bash
+# 配置日志轮转
+sudo nano /etc/logrotate.d/upscale-api
+```
+
+```
+/var/log/upscale-api/*.log {
+    daily
+    missingok
+    rotate 7
+    compress
+    delaycompress
+    notifempty
+    create 644 root root
+}
 ```
 
 ## 🛠️ 故障排除
 
 ### 常见问题
 
-#### 1. 推送失败：Authentication failed
+**1. Docker启动失败**
 ```bash
-# 解决方案：使用Personal Access Token
-git remote set-url origin https://[TOKEN]@github.com/RuthlessXdream/anime-image-upscaler-api.git
+# 检查Docker服务
+sudo systemctl status docker
+
+# 检查端口占用
+sudo netstat -tlnp | grep 3005
+
+# 查看详细错误
+sudo docker-compose logs app
 ```
 
-#### 2. 文件过大无法推送
+**2. GPU不可用**
 ```bash
-# 检查大文件
-git ls-files -s | sort -k5 -nr | head -10
+# 检查NVIDIA驱动
+nvidia-smi
 
-# 移除大文件
-git rm --cached large-file.bin
-git commit -m "remove large file"
+# 检查Docker GPU支持
+docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
+
+# 重启Docker服务
+sudo systemctl restart docker
 ```
 
-#### 3. .gitignore不生效
+**3. 内存不足**
 ```bash
-# 清除缓存
-git rm -r --cached .
-git add .
-git commit -m "fix: update .gitignore"
+# 检查系统内存
+free -h
+
+# 检查容器内存使用
+docker stats
+
+# 调整配置
+echo "MAX_WORKERS=1" >> config.env
+echo "USE_HALF_PRECISION=true" >> config.env
 ```
 
-## 📞 获得帮助
+**4. 网络连接问题**
+```bash
+# 检查防火墙
+sudo ufw status
+sudo iptables -L
 
-如果部署过程中遇到问题：
-1. 检查GitHub仓库是否已创建
-2. 确认Git配置和凭据
-3. 查看错误信息并搜索解决方案
-4. 在项目Issues中提问
+# 开放端口
+sudo ufw allow 3005
+sudo firewall-cmd --permanent --add-port=3005/tcp
+sudo firewall-cmd --reload
+```
+
+### 日志分析
+
+**应用日志**
+```bash
+# Docker日志
+sudo docker-compose logs -f app
+
+# 系统服务日志
+sudo journalctl -u upscale-api -f
+
+# Nginx日志
+sudo tail -f /var/log/nginx/access.log
+sudo tail -f /var/log/nginx/error.log
+```
+
+**性能监控**
+```bash
+# 系统资源监控
+htop
+iotop
+nvidia-smi -l 1
+
+# API性能测试
+curl -w "@curl-format.txt" -o /dev/null -s http://localhost:3005/health
+```
+
+## 📊 部署验证
+
+### 功能测试
+
+**基础API测试**
+```bash
+# 健康检查
+curl http://localhost:3005/health
+
+# 系统状态
+curl http://localhost:3005/api/v1/system/status
+
+# 图像处理测试
+curl -X POST "http://localhost:3005/api/v1/upscale" \
+     -H "Content-Type: multipart/form-data" \
+     -F "file=@test_image.jpg" \
+     -o upscaled_result.jpg
+```
+
+**压力测试**
+```bash
+# 安装测试工具
+sudo apt install apache2-utils
+
+# 并发测试
+ab -n 100 -c 10 http://localhost:3005/health
+
+# 文件上传测试
+for i in {1..10}; do
+  curl -X POST "http://localhost:3005/api/v1/upscale" \
+       -F "file=@test.jpg" \
+       -o "result_$i.jpg" &
+done
+wait
+```
 
 ## 🎉 部署完成
 
-部署成功后，您的项目将在以下地址可访问：
-- **仓库主页**：https://github.com/RuthlessXdream/anime-image-upscaler-api
-- **API文档**：在README中有详细说明
-- **Issues**：https://github.com/RuthlessXdream/anime-image-upscaler-api/issues
-- **Discussions**：https://github.com/RuthlessXdream/anime-image-upscaler-api/discussions
+部署成功后，您的API服务将在以下地址可用：
 
-恭喜！您的动漫图片高清修复API项目现在已经在GitHub上线了！🎊 
+- **API服务**: http://localhost:3005
+- **API文档**: http://localhost:3005/docs
+- **健康检查**: http://localhost:3005/health
+- **系统状态**: http://localhost:3005/api/v1/system/status
+
+### 后续步骤
+
+1. **域名配置**: 配置DNS解析到服务器IP
+2. **SSL证书**: 启用HTTPS加密
+3. **监控告警**: 配置服务监控和告警
+4. **备份策略**: 设置数据备份计划
+5. **更新策略**: 建立版本更新流程
+
+### 获得帮助
+
+如果部署过程中遇到问题：
+- 📖 查看 [README.md](README.md) 了解基础使用
+- 🔧 查看 [CONFIG_GUIDE.md](CONFIG_GUIDE.md) 了解配置详情
+- 🐛 在 [GitHub Issues](https://github.com/RuthlessXdream/anime-image-upscaler-api/issues) 提交问题
+- 💬 在 [GitHub Discussions](https://github.com/RuthlessXdream/anime-image-upscaler-api/discussions) 参与讨论 
