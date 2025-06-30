@@ -119,6 +119,33 @@ ALLOWED_EXTENSIONS=.jpg,.jpeg,.png,.bmp,.tiff,.webp
 | **适用场景** | 生产环境、高并发 | 开发测试、无GPU环境 |
 | **启动命令** | `docker-compose up -d` | `docker-compose -f docker-compose.cpu.yml up -d` |
 
+### 🐳 Dockerfile选择指南
+
+**有GPU用户（推荐）**：
+- **首选**: `Dockerfile` - 使用CUDA 11.8，性能最佳
+- **备选**: `Dockerfile.gpu-alternative` - 使用CUDA 12.1，网络友好
+- **避免**: `Dockerfile.alternative` - 仅CPU版本，浪费GPU性能
+
+**无GPU用户**：
+- **唯一选择**: `Dockerfile.alternative` - CPU版本，兼容性最好
+
+```bash
+# 🚀 GPU用户（RTX 3060/4070/4090等）
+# 方法1: 标准GPU版本（推荐）
+docker build -t anime-upscaler-api .
+docker-compose up -d
+
+# 方法2: 如果CUDA 11.8镜像拉取失败，使用CUDA 12.1
+docker build -f Dockerfile.gpu-alternative -t anime-upscaler-api .
+
+# ❌ 错误用法 - 不要在有GPU的机器上使用CPU版本
+# docker build -f Dockerfile.alternative  # 这会浪费您的GPU！
+
+# 💻 CPU用户（无显卡或集成显卡）
+docker build -f Dockerfile.alternative -t anime-upscaler-api .
+docker-compose -f docker-compose.cpu.yml up -d
+```
+
 ## 📖 API使用指南
 
 ### 接口文档
@@ -171,8 +198,10 @@ anime-image-upscaler-api/
 ├── 🐳 Docker配置
 │   ├── docker-compose.yml         # GPU版本部署
 │   ├── docker-compose.cpu.yml     # CPU版本部署
-│   ├── Dockerfile                 # GPU镜像构建
+│   ├── Dockerfile                 # GPU镜像构建（CUDA 11.8）
+│   ├── Dockerfile.gpu-alternative # GPU备用镜像（CUDA 12.1）
 │   ├── Dockerfile.cpu            # CPU镜像构建
+│   ├── Dockerfile.alternative    # CPU备用镜像（Ubuntu基础）
 │   └── docker-entrypoint.sh      # 容器启动脚本
 ├── 📱 应用核心
 │   ├── app/
@@ -274,13 +303,17 @@ docker stats upscale_api-app-1
 
 **问题**: `nvidia/cuda:11.8-devel-ubuntu22.04: not found` 或网络连接超时
 
+**⚠️ 重要提醒**: 如果您有GPU（RTX 3060/4070/4090等），请不要使用`Dockerfile.alternative`，这会完全浪费您的GPU性能！
+
 **解决方案**:
 
-1. **使用备用Dockerfile**:
+1. **GPU用户首选方案**:
 ```bash
-# 使用Ubuntu基础镜像（无CUDA）
-docker build -f Dockerfile.alternative -t anime-upscaler-api .
-docker run -d -p 3005:3005 anime-upscaler-api
+# 尝试标准GPU版本
+docker build -t anime-upscaler-api .
+
+# 如果失败，使用GPU备用版本（CUDA 12.1）
+docker build -f Dockerfile.gpu-alternative -t anime-upscaler-api .
 ```
 
 2. **配置Docker代理** (Windows):
@@ -322,6 +355,12 @@ sudo tee /etc/docker/daemon.json <<EOF
 EOF
 
 sudo systemctl restart docker
+```
+
+5. **仅限无GPU用户**:
+```bash
+# 只有在确实没有GPU时才使用此方案
+docker build -f Dockerfile.alternative -t anime-upscaler-api .
 ```
 </details>
 

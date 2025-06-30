@@ -74,26 +74,35 @@ nano config.env
 
 **3. 选择部署模式**
 
-**GPU模式（推荐）**
+**GPU模式（推荐 - 适用于有独立显卡的用户）**
+
 ```bash
 # 检查GPU可用性
 nvidia-smi
 
-# 启动GPU版本
+# 方法1: 标准GPU版本（CUDA 11.8）
 sudo docker-compose up --build -d
+
+# 方法2: 如果CUDA 11.8镜像拉取失败，使用备用GPU版本（CUDA 12.1）
+docker build -f Dockerfile.gpu-alternative -t anime-upscaler-api .
+docker run -d --gpus all -p 3005:3005 --name anime-upscaler-api anime-upscaler-api
 
 # 查看启动日志
 sudo docker-compose logs -f app
 ```
 
-**CPU模式**
+**CPU模式（适用于无独立显卡的用户）**
 ```bash
-# 适用于无GPU环境
+# 适用于无GPU环境或集成显卡
 sudo docker-compose -f docker-compose.cpu.yml up --build -d
 
 # 查看启动日志
 sudo docker-compose -f docker-compose.cpu.yml logs -f app
 ```
+
+**⚠️ 重要提醒**: 
+- 如果您有独立显卡（GTX/RTX系列），请务必使用GPU版本
+- 不要在有GPU的机器上使用CPU版本，这会严重影响性能
 
 **4. 验证部署**
 ```bash
@@ -376,10 +385,23 @@ sudo nano /etc/logrotate.d/upscale-api
 
 **方案1: 使用备用Dockerfile**
 ```bash
-# 构建备用镜像（使用Ubuntu基础镜像）
+# GPU用户 - 使用CUDA 12.1版本（推荐）
+docker build -f Dockerfile.gpu-alternative -t anime-upscaler-api .
+
+# 手动运行GPU容器
+docker run -d \
+  --gpus all \
+  --name anime-upscaler-api \
+  -p 3005:3005 \
+  -v $(pwd)/uploads:/app/uploads \
+  -v $(pwd)/outputs:/app/outputs \
+  -v $(pwd)/config.env:/app/config.env:ro \
+  anime-upscaler-api
+
+# 仅限无GPU用户 - 使用Ubuntu基础镜像
 docker build -f Dockerfile.alternative -t anime-upscaler-api .
 
-# 手动运行容器
+# 手动运行CPU容器
 docker run -d \
   --name anime-upscaler-api \
   -p 3005:3005 \
