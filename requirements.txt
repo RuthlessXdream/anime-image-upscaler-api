@@ -1,13 +1,31 @@
+# 必需依赖及兼容版本
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 python-multipart==0.0.6
 aiofiles==23.2.0
+
+# Pydantic相关 - 确保版本兼容
 pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# 图像处理
 opencv-python==4.8.1.78
+Pillow>=10.0.0
+
+# 数值计算
 numpy==1.24.3
-torch>=1.7
-torchvision
+
+# AI/ML - 兼容版本
+torch>=1.7,<2.5
+torchvision>=0.15.0,<0.20.0
+
+# Real-ESRGAN相关
 basicsr>=1.4.2
 realesrgan
+
+# 系统监控
 psutil==5.9.5
-GPUtil==1.4.0 
+GPUtil==1.4.0
+
+# 工具库
+python-dotenv>=1.0.0 

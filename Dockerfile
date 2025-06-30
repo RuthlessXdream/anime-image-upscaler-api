@@ -5,7 +5,8 @@ FROM nvidia/cuda:11.8-devel-ubuntu22.04
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     DEBIAN_FRONTEND=noninteractive \
-    TZ=Asia/Shanghai
+    TZ=Asia/Shanghai \
+    PORT=3005
 
 # 安装系统依赖
 RUN apt-get update && apt-get install -y \
@@ -47,12 +48,12 @@ RUN chmod +x /app/docker-entrypoint.sh
 # 下载模型文件（如果不存在）
 RUN python3 scripts/install_dependencies.py || echo "模型下载可能失败，将在运行时重试"
 
-# 暴露端口
-EXPOSE 7999
+# 暴露端口（默认3005，实际端口由docker-compose.yml控制）
+EXPOSE 3005
 
-# 健康检查
+# 健康检查（使用shell形式支持环境变量）
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:7999/health || exit 1
+    CMD curl -f http://localhost:${PORT}/health || exit 1
 
 # 设置启动脚本
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
