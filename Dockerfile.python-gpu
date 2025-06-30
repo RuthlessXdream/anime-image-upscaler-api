@@ -1,4 +1,4 @@
-# 轻量级GPU Dockerfile - 基于Python官方镜像
+# 轻量级GPU Dockerfile - 基于Python官方镜像（推荐）
 # 使用方法：docker build -f Dockerfile.python-gpu -t anime-upscaler-api .
 FROM python:3.10-slim
 
@@ -17,23 +17,47 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1-mesa-glx \
     libglib2.0-0 \
     libgomp1 \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
-
-# 配置pip镜像源（中国用户加速）
-RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 创建工作目录
 WORKDIR /app
 
-# 复制依赖文件
-COPY requirements/base.txt /app/requirements.txt
-COPY requirements.txt /app/requirements_main.txt
+# 升级pip并设置超时
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# 安装GPU版本的PyTorch（自动检测CUDA版本）
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir -r requirements_main.txt
+# 1. 安装PyTorch GPU版本（使用官方源）
+RUN pip install --no-cache-dir --timeout 300 \
+    torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+# 2. 安装核心依赖（逐个安装，避免冲突）
+RUN pip install --no-cache-dir --timeout 300 \
+    fastapi==0.104.1 \
+    uvicorn[standard]==0.24.0 \
+    pydantic==2.5.0 \
+    pydantic-settings==2.1.0
+
+RUN pip install --no-cache-dir --timeout 300 \
+    python-multipart==0.0.6 \
+    aiofiles==23.2.0 \
+    python-dotenv>=1.0.0
+
+RUN pip install --no-cache-dir --timeout 300 \
+    opencv-python==4.8.1.78 \
+    "Pillow>=10.0.0" \
+    numpy==1.24.3
+
+RUN pip install --no-cache-dir --timeout 300 \
+    psutil==5.9.5 \
+    GPUtil==1.4.0
+
+# 3. 安装Real-ESRGAN（使用官方源，避免tb-nightly问题）
+RUN pip install --no-cache-dir --timeout 300 --index-url https://pypi.org/simple \
+    realesrgan
+
+# 4. 尝试安装basicsr，如果失败则跳过（运行时安装）
+RUN pip install --no-cache-dir --timeout 300 --index-url https://pypi.org/simple \
+    basicsr>=1.4.2 || echo "basicsr安装失败，将在运行时重试"
 
 # 复制项目文件
 COPY . /app/
@@ -43,6 +67,20 @@ RUN mkdir -p /app/uploads /app/outputs /app/Real-ESRGAN/weights
 
 # 设置权限
 RUN chmod +x /app/docker-entrypoint.sh
+
+# 创建运行时依赖安装脚本
+RUN echo '#!/bin/bash\n\
+# 运行时安装缺失的依赖\n\
+echo "检查并安装缺失的依赖..."\n\
+python -c "import basicsr" 2>/dev/null || {\n\
+    echo "安装basicsr..."\n\
+    pip install --no-cache-dir basicsr>=1.4.2 --index-url https://pypi.org/simple || {\n\
+        echo "使用备用方案安装basicsr..."\n\
+        pip install --no-cache-dir basicsr==1.4.2 --no-deps\n\
+    }\n\
+}\n\
+echo "依赖检查完成"' > /app/install_runtime_deps.sh && \
+chmod +x /app/install_runtime_deps.sh
 
 # 下载模型文件（如果不存在）
 RUN python scripts/install_dependencies.py || echo "模型下载可能失败，将在运行时重试"

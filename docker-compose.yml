@@ -1,7 +1,23 @@
+# GPU版本部署配置
+# 
+# 🚀 使用方法：
+# 1. 标准GPU版本（CUDA镜像，功能完整但较大）：
+#    docker-compose up --build -d
+# 
+# 2. 轻量级GPU版本（Python镜像，推荐）：
+#    docker-compose up --build -d
+#    然后修改下面的dockerfile为：Dockerfile.python-gpu
+# 
+# 3. CPU版本（无GPU环境）：
+#    docker-compose -f docker-compose.cpu.yml up --build -d
+
 services:
   anime-upscaler-api:
     build:
       context: .
+      # 选择Dockerfile版本：
+      # - Dockerfile: 标准GPU版本（CUDA镜像，~6GB）
+      # - Dockerfile.python-gpu: 轻量级GPU版本（Python镜像，~2GB，推荐）
       dockerfile: Dockerfile
     container_name: anime-upscaler-api
     restart: unless-stopped

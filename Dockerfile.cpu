@@ -1,5 +1,6 @@
-# CPU版本的Dockerfile - 适用于没有GPU的环境
-FROM python:3.10-slim-bullseye
+# CPU版本 Dockerfile - 适用于无GPU环境
+# 使用方法：docker build -f Dockerfile.cpu -t anime-upscaler-api .
+FROM python:3.10-slim
 
 # 设置环境变量
 ENV PYTHONUNBUFFERED=1 \
@@ -9,30 +10,28 @@ ENV PYTHONUNBUFFERED=1 \
     PORT=3005
 
 # 安装系统依赖
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     wget \
     curl \
     libgl1-mesa-glx \
     libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
     libgomp1 \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # 创建工作目录
 WORKDIR /app
 
-# 复制依赖文件
-COPY requirements.txt /app/requirements.txt
+# 升级pip
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# 安装Python依赖
-RUN pip3 install --no-cache-dir --upgrade pip && \
-    # 先安装兼容的CPU版本PyTorch
-    pip3 install --no-cache-dir torch==2.1.2+cpu torchvision==0.16.2+cpu --index-url https://download.pytorch.org/whl/cpu && \
-    # 再安装其他依赖
-    pip3 install --no-cache-dir -r requirements.txt
+# 安装PyTorch CPU版本
+RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+# 复制并安装Python依赖
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
 
 # 复制项目文件
 COPY . /app/
@@ -43,16 +42,16 @@ RUN mkdir -p /app/uploads /app/outputs /app/Real-ESRGAN/weights
 # 设置权限
 RUN chmod +x /app/docker-entrypoint.sh
 
-# 下载模型文件（如果不存在）
-RUN python3 scripts/install_dependencies.py || echo "模型下载可能失败，将在运行时重试"
+# 下载模型文件
+RUN python scripts/install_dependencies.py || echo "模型下载可能失败，将在运行时重试"
 
-# 暴露端口（默认3005，实际端口由docker-compose.yml控制）
+# 暴露端口
 EXPOSE 3005
 
-# 健康检查（使用shell形式支持环境变量）
+# 健康检查
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
 # 设置启动脚本
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["python3", "start_modern.py"] 
+CMD ["python", "start_modern.py"] 

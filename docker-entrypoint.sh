@@ -13,6 +13,50 @@ mkdir -p /app/uploads /app/outputs /app/Real-ESRGAN/weights
 # 设置权限
 chmod 755 /app/uploads /app/outputs /app/Real-ESRGAN/weights
 
+# 检查并安装运行时依赖
+echo "📦 检查运行时依赖..."
+if [ -f "/app/install_runtime_deps.sh" ]; then
+    echo "🔧 运行依赖检查脚本..."
+    /app/install_runtime_deps.sh
+fi
+
+# 检查关键Python包
+echo "🐍 验证Python依赖..."
+python3 -c "
+import sys
+missing_packages = []
+
+try:
+    import torch
+    print('✅ PyTorch:', torch.__version__)
+except ImportError:
+    missing_packages.append('torch')
+
+try:
+    import basicsr
+    print('✅ BasicSR:', basicsr.__version__)
+except ImportError:
+    print('⚠️ BasicSR 未安装，尝试安装...')
+    import subprocess
+    try:
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'basicsr>=1.4.2', '--index-url', 'https://pypi.org/simple'])
+        print('✅ BasicSR 安装成功')
+    except:
+        print('❌ BasicSR 安装失败，可能影响某些功能')
+
+try:
+    import realesrgan
+    print('✅ Real-ESRGAN 可用')
+except ImportError:
+    missing_packages.append('realesrgan')
+
+if missing_packages:
+    print('❌ 缺少关键依赖:', ', '.join(missing_packages))
+    print('💡 尝试重新构建Docker镜像')
+else:
+    print('✅ 所有关键依赖已就绪')
+"
+
 # 检查GPU是否可用
 echo "🎮 检查GPU状态..."
 if command -v nvidia-smi &> /dev/null; then

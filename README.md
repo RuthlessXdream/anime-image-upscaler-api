@@ -35,17 +35,22 @@ cp config.env.example config.env
 nano config.env  # 修改端口、模型等配置
 ```
 
-**3. 一键启动**
+**3. 选择部署版本**
+
+**🚀 GPU用户（推荐）**：
 ```bash
-# GPU版本（推荐，需要NVIDIA GPU + CUDA支持）
-# 方法1: 轻量级Python版本（推荐 - 镜像小，构建快）
-sudo docker-compose -f docker-compose.python-gpu.yml up --build -d
+# 方法1: 轻量级版本（推荐 - 镜像小，构建快）
+docker-compose up --build -d
+# 然后编辑docker-compose.yml，将dockerfile改为：Dockerfile.python-gpu
 
-# 方法2: 标准CUDA版本（镜像较大）
-sudo docker-compose up --build -d
+# 方法2: 标准版本（功能完整但镜像较大）
+docker-compose up --build -d
+```
 
+**💻 CPU用户**：
+```bash
 # CPU版本（适用于无GPU环境）
-sudo docker-compose -f docker-compose.cpu.yml up --build -d
+docker-compose -f docker-compose.cpu.yml up --build -d
 ```
 
 **4. 验证服务**
@@ -114,6 +119,19 @@ MAX_FILE_SIZE=52428800      # 最大文件大小（50MB）
 ALLOWED_EXTENSIONS=.jpg,.jpeg,.png,.bmp,.tiff,.webp
 ```
 
+### Docker版本选择
+
+| 版本 | 文件名 | 基础镜像 | 镜像大小 | 适用场景 | 推荐度 |
+|------|--------|----------|----------|----------|--------|
+| **轻量级GPU** | `Dockerfile.python-gpu` | python:3.10-slim | ~2GB | GPU环境，快速部署 | ⭐⭐⭐⭐⭐ |
+| **标准GPU** | `Dockerfile` | nvidia/cuda:11.8-runtime | ~6GB | GPU环境，完整功能 | ⭐⭐⭐⭐ |
+| **CPU版本** | `Dockerfile.cpu` | python:3.10-slim | ~2GB | 无GPU环境 | ⭐⭐⭐ |
+
+**使用建议**：
+- **有GPU用户**：优先选择轻量级GPU版本（`Dockerfile.python-gpu`）
+- **无GPU用户**：使用CPU版本（`Dockerfile.cpu`）
+- **企业环境**：可选择标准GPU版本获得更好的兼容性
+
 ### GPU vs CPU 模式选择
 
 | 特性 | GPU模式 | CPU模式 |
@@ -122,47 +140,6 @@ ALLOWED_EXTENSIONS=.jpg,.jpeg,.png,.bmp,.tiff,.webp
 | **内存需求** | 4GB+ GPU显存 | 8GB+ 系统内存 |
 | **适用场景** | 生产环境、高并发 | 开发测试、无GPU环境 |
 | **启动命令** | `docker-compose up -d` | `docker-compose -f docker-compose.cpu.yml up -d` |
-
-### Dockerfile选择指南
-
-**🚀 GPU用户（推荐）**：
-- **首选**: `Dockerfile.python-gpu` - 基于Python 3.10-slim，镜像小，构建快
-- **备选**: `Dockerfile` - 使用CUDA 11.8，功能完整但镜像较大
-- **修复版**: `Dockerfile.gpu-alternative` - 修复了错误的CUDA标签
-- **避免**: `Dockerfile.alternative` - 仅CPU版本，浪费GPU性能
-
-**💻 无GPU用户**：
-- **唯一选择**: `Dockerfile.alternative` - CPU版本，兼容性最好
-
-**📊 镜像大小对比**：
-| Dockerfile | 基础镜像 | 预估大小 | 构建时间 | 推荐度 |
-|------------|----------|----------|----------|--------|
-| `Dockerfile.python-gpu` | python:3.10-slim | ~2GB | 快 | ⭐⭐⭐⭐⭐ |
-| `Dockerfile` | nvidia/cuda:11.8-devel | ~8GB | 中等 | ⭐⭐⭐ |
-| `Dockerfile.gpu-alternative` | nvidia/cuda:11.8-runtime | ~6GB | 中等 | ⭐⭐⭐ |
-| `Dockerfile.alternative` | ubuntu:22.04 | ~3GB | 快 | ⭐⭐ (仅CPU) |
-
-```bash
-# 🚀 GPU用户（RTX 3060/4070/4090等）
-# 方法1: 轻量级Python版本（强烈推荐）
-docker build -f Dockerfile.python-gpu -t anime-upscaler-api .
-
-# 方法2: 标准CUDA版本
-docker build -t anime-upscaler-api .
-
-# 方法3: 如果上述都失败，使用修复版
-docker build -f Dockerfile.gpu-alternative -t anime-upscaler-api .
-
-# 启动GPU容器
-docker run -d --gpus all -p 3005:3005 --name anime-upscaler-api anime-upscaler-api
-
-# ❌ 错误用法 - 不要在有GPU的机器上使用CPU版本
-# docker build -f Dockerfile.alternative  # 这会浪费您的GPU！
-
-# 💻 CPU用户（无显卡或集成显卡）
-docker build -f Dockerfile.alternative -t anime-upscaler-api .
-docker-compose -f docker-compose.cpu.yml up -d
-```
 
 ## 📖 API使用指南
 
@@ -216,32 +193,31 @@ anime-image-upscaler-api/
 ├── 🐳 Docker配置
 │   ├── docker-compose.yml         # GPU版本部署
 │   ├── docker-compose.cpu.yml     # CPU版本部署
-│   ├── Dockerfile                 # GPU镜像构建（CUDA 11.8）
-│   ├── Dockerfile.gpu-alternative # GPU备用镜像（CUDA 12.1）
-│   ├── Dockerfile.cpu            # CPU镜像构建
-│   ├── Dockerfile.alternative    # CPU备用镜像（Ubuntu基础）
-│   └── docker-entrypoint.sh      # 容器启动脚本
+│   ├── Dockerfile                 # 标准GPU版本（CUDA）
+│   ├── Dockerfile.python-gpu      # 轻量级GPU版本（推荐）
+│   ├── Dockerfile.cpu             # CPU版本
+│   └── docker-entrypoint.sh       # 容器启动脚本
 ├── 📱 应用核心
 │   ├── app/
-│   │   ├── main.py               # FastAPI应用入口
-│   │   ├── api/v1/               # API路由版本管理
-│   │   ├── core/                 # 核心业务逻辑
-│   │   ├── models/               # 数据模型定义
-│   │   └── utils/                # 工具函数
-│   └── Real-ESRGAN/              # AI模型子模块
+│   │   ├── main.py                # FastAPI应用入口
+│   │   ├── api/v1/                # API路由版本管理
+│   │   ├── core/                  # 核心业务逻辑
+│   │   ├── models/                # 数据模型定义
+│   │   └── utils/                 # 工具函数
+│   └── Real-ESRGAN/               # AI模型子模块
 ├── ⚙️ 配置管理
-│   ├── config.env                # 主配置文件
-│   ├── config_manager.py         # 配置管理器
-│   └── requirements.txt          # Python依赖
+│   ├── config.env                 # 主配置文件
+│   ├── config_manager.py          # 配置管理器
+│   └── requirements.txt           # Python依赖
 ├── 📂 运行时目录
-│   ├── uploads/                  # 上传文件临时存储
-│   ├── outputs/                  # 处理结果输出
-│   └── Real-ESRGAN/weights/      # AI模型文件
+│   ├── uploads/                   # 上传文件临时存储
+│   ├── outputs/                   # 处理结果输出
+│   └── Real-ESRGAN/weights/       # AI模型文件
 └── 📚 文档脚本
-    ├── README.md                 # 项目说明
-    ├── DEPLOYMENT.md             # 部署指南
-    ├── CONFIG_GUIDE.md           # 配置说明
-    └── scripts/                  # 辅助脚本
+    ├── README.md                  # 项目说明
+    ├── DEPLOYMENT.md              # 部署指南
+    ├── CONFIG_GUIDE.md            # 配置说明
+    └── scripts/                   # 辅助脚本
 ```
 
 ## 🔧 开发与部署
@@ -319,49 +295,18 @@ docker stats upscale_api-app-1
 <details>
 <summary>Docker镜像拉取失败</summary>
 
-**问题**: `nvidia/cuda:11.8-devel-ubuntu22.04: not found` 或网络连接超时
-
-**⚠️ 重要提醒**: 如果您有GPU（RTX 3060/4070/4090等），请不要使用`Dockerfile.alternative`，这会完全浪费您的GPU性能！
+**问题**: NVIDIA镜像拉取失败或网络连接超时
 
 **解决方案**:
 
-1. **GPU用户首选方案**:
+1. **使用轻量级版本**（推荐）:
 ```bash
-# 尝试标准GPU版本
-docker build -t anime-upscaler-api .
-
-# 如果失败，使用GPU备用版本（CUDA 12.1）
-docker build -f Dockerfile.gpu-alternative -t anime-upscaler-api .
+# 编辑docker-compose.yml，将dockerfile改为：Dockerfile.python-gpu
+docker-compose up --build -d
 ```
 
-2. **配置Docker代理** (Windows):
-```powershell
-# PowerShell设置代理
-$env:HTTP_PROXY="http://127.0.0.1:7897"
-$env:HTTPS_PROXY="http://127.0.0.1:7897"
-
-# 重启Docker Desktop
-```
-
-3. **配置Docker代理** (Linux):
+2. **配置Docker镜像加速器**（中国用户）:
 ```bash
-# 创建Docker代理配置
-sudo mkdir -p /etc/systemd/system/docker.service.d
-sudo tee /etc/systemd/system/docker.service.d/http-proxy.conf <<EOF
-[Service]
-Environment="HTTP_PROXY=http://127.0.0.1:7897"
-Environment="HTTPS_PROXY=http://127.0.0.1:7897"
-Environment="NO_PROXY=localhost,127.0.0.1"
-EOF
-
-# 重启Docker服务
-sudo systemctl daemon-reload
-sudo systemctl restart docker
-```
-
-4. **使用镜像加速器**:
-```bash
-# 配置Docker镜像加速器（中国用户）
 sudo tee /etc/docker/daemon.json <<EOF
 {
   "registry-mirrors": [
@@ -375,10 +320,17 @@ EOF
 sudo systemctl restart docker
 ```
 
-5. **仅限无GPU用户**:
+3. **配置代理**（如需要）:
 ```bash
-# 只有在确实没有GPU时才使用此方案
-docker build -f Dockerfile.alternative -t anime-upscaler-api .
+# Linux
+sudo mkdir -p /etc/systemd/system/docker.service.d
+sudo tee /etc/systemd/system/docker.service.d/http-proxy.conf <<EOF
+[Service]
+Environment="HTTP_PROXY=http://127.0.0.1:7897"
+Environment="HTTPS_PROXY=http://127.0.0.1:7897"
+EOF
+
+sudo systemctl daemon-reload && sudo systemctl restart docker
 ```
 </details>
 
@@ -422,52 +374,13 @@ echo "USE_HALF_PRECISION=true" >> config.env
 ```
 </details>
 
-<details>
-<summary>版本兼容性问题</summary>
-
-**问题**: `version is obsolete` 警告
-
-**解决方案**: 已修复，更新到最新版本即可:
-```bash
-git pull origin main
-```
-</details>
-
-### 网络问题解决
-
-**中国大陆用户网络优化**:
-
-1. **Docker镜像源配置**:
-```bash
-# 编辑Docker配置
-sudo nano /etc/docker/daemon.json
-```
-
-```json
-{
-  "registry-mirrors": [
-    "https://docker.mirrors.ustc.edu.cn",
-    "https://hub-mirror.c.163.com"
-  ]
-}
-```
-
-2. **pip镜像源配置**:
-```bash
-# 临时使用
-pip install -i https://pypi.tuna.tsinghua.edu.cn/simple package_name
-
-# 永久配置
-pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
-```
-
 ### 日志查看
 ```bash
 # 查看应用日志
-sudo docker-compose logs app
+docker-compose logs anime-upscaler-api
 
 # 实时跟踪日志
-sudo docker-compose logs -f app
+docker-compose logs -f anime-upscaler-api
 
 # 查看系统资源
 curl http://localhost:3005/api/v1/system/status

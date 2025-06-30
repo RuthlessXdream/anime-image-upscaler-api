@@ -1,6 +1,6 @@
-# 使用官方Python基础镜像，支持CUDA
-# 如果无法拉取NVIDIA镜像，请使用备用Dockerfile.alternative
-FROM nvidia/cuda:11.8-devel-ubuntu22.04
+# GPU版本 Dockerfile - 基于NVIDIA CUDA
+# 使用方法：docker build -t anime-upscaler-api .
+FROM nvidia/cuda:11.8-runtime-ubuntu22.04
 
 # 设置环境变量
 ENV PYTHONUNBUFFERED=1 \
@@ -9,12 +9,8 @@ ENV PYTHONUNBUFFERED=1 \
     TZ=Asia/Shanghai \
     PORT=3005
 
-# 配置APT镜像源（中国用户可取消注释）
-# RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && \
-#     sed -i 's/security.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list
-
 # 安装系统依赖
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
     python3-dev \
@@ -23,26 +19,25 @@ RUN apt-get update && apt-get install -y \
     curl \
     libgl1-mesa-glx \
     libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
     libgomp1 \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# 配置pip镜像源（中国用户可取消注释）
-# RUN pip3 config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+# 创建python3的软链接
+RUN ln -sf /usr/bin/python3 /usr/bin/python
 
 # 创建工作目录
 WORKDIR /app
 
-# 复制依赖文件
-COPY requirements/base.txt /app/requirements.txt
-COPY requirements.txt /app/requirements_main.txt
+# 升级pip
+RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel
 
-# 安装Python依赖
-RUN pip3 install --no-cache-dir --upgrade pip && \
-    pip3 install --no-cache-dir -r requirements.txt && \
-    pip3 install --no-cache-dir -r requirements_main.txt
+# 安装PyTorch GPU版本
+RUN pip3 install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+# 复制并安装Python依赖
+COPY requirements.txt /app/
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # 复制项目文件
 COPY . /app/
@@ -53,13 +48,13 @@ RUN mkdir -p /app/uploads /app/outputs /app/Real-ESRGAN/weights
 # 设置权限
 RUN chmod +x /app/docker-entrypoint.sh
 
-# 下载模型文件（如果不存在）
+# 下载模型文件
 RUN python3 scripts/install_dependencies.py || echo "模型下载可能失败，将在运行时重试"
 
-# 暴露端口（默认3005，实际端口由docker-compose.yml控制）
+# 暴露端口
 EXPOSE 3005
 
-# 健康检查（使用shell形式支持环境变量）
+# 健康检查
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
