@@ -270,6 +270,62 @@ docker stats upscale_api-app-1
 ### 常见问题
 
 <details>
+<summary>Docker镜像拉取失败</summary>
+
+**问题**: `nvidia/cuda:11.8-devel-ubuntu22.04: not found` 或网络连接超时
+
+**解决方案**:
+
+1. **使用备用Dockerfile**:
+```bash
+# 使用Ubuntu基础镜像（无CUDA）
+docker build -f Dockerfile.alternative -t anime-upscaler-api .
+docker run -d -p 3005:3005 anime-upscaler-api
+```
+
+2. **配置Docker代理** (Windows):
+```powershell
+# PowerShell设置代理
+$env:HTTP_PROXY="http://127.0.0.1:7897"
+$env:HTTPS_PROXY="http://127.0.0.1:7897"
+
+# 重启Docker Desktop
+```
+
+3. **配置Docker代理** (Linux):
+```bash
+# 创建Docker代理配置
+sudo mkdir -p /etc/systemd/system/docker.service.d
+sudo tee /etc/systemd/system/docker.service.d/http-proxy.conf <<EOF
+[Service]
+Environment="HTTP_PROXY=http://127.0.0.1:7897"
+Environment="HTTPS_PROXY=http://127.0.0.1:7897"
+Environment="NO_PROXY=localhost,127.0.0.1"
+EOF
+
+# 重启Docker服务
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```
+
+4. **使用镜像加速器**:
+```bash
+# 配置Docker镜像加速器（中国用户）
+sudo tee /etc/docker/daemon.json <<EOF
+{
+  "registry-mirrors": [
+    "https://docker.mirrors.ustc.edu.cn",
+    "https://hub-mirror.c.163.com",
+    "https://mirror.baidubce.com"
+  ]
+}
+EOF
+
+sudo systemctl restart docker
+```
+</details>
+
+<details>
 <summary>Docker启动失败</summary>
 
 ```bash
@@ -308,6 +364,45 @@ echo "MAX_WORKERS=1" >> config.env
 echo "USE_HALF_PRECISION=true" >> config.env
 ```
 </details>
+
+<details>
+<summary>版本兼容性问题</summary>
+
+**问题**: `version is obsolete` 警告
+
+**解决方案**: 已修复，更新到最新版本即可:
+```bash
+git pull origin main
+```
+</details>
+
+### 网络问题解决
+
+**中国大陆用户网络优化**:
+
+1. **Docker镜像源配置**:
+```bash
+# 编辑Docker配置
+sudo nano /etc/docker/daemon.json
+```
+
+```json
+{
+  "registry-mirrors": [
+    "https://docker.mirrors.ustc.edu.cn",
+    "https://hub-mirror.c.163.com"
+  ]
+}
+```
+
+2. **pip镜像源配置**:
+```bash
+# 临时使用
+pip install -i https://pypi.tuna.tsinghua.edu.cn/simple package_name
+
+# 永久配置
+pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+```
 
 ### 日志查看
 ```bash

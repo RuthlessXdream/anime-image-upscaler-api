@@ -1,14 +1,12 @@
-version: '3.8'
-
 services:
-  anime-upscaler-api-cpu:
+  app:
     build:
       context: .
       dockerfile: Dockerfile.cpu
-    container_name: anime-upscaler-api-cpu
+    container_name: upscale_api-app-cpu
     restart: unless-stopped
     ports:
-      - "${PORT:-3005}:${PORT:-3005}"  # 使用环境变量，默认3005
+      - "${PORT:-3005}:${PORT:-3005}"
     volumes:
       # 数据持久化
       - ./uploads:/app/uploads
@@ -24,14 +22,14 @@ services:
       - DEBUG=false
       - GPU_ID=-1  # 禁用GPU
     networks:
-      - anime-upscaler-network
+      - upscale-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${PORT:-3005}/health"]  # 动态端口
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s  # CPU模式启动较慢
+      start_period: 40s  # CPU模式启动较慢
 
 networks:
-  anime-upscaler-network:
+  upscale-network:
     driver: bridge 

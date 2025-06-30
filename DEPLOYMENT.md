@@ -364,7 +364,104 @@ sudo nano /etc/logrotate.d/upscale-api
 
 ### 常见问题
 
-**1. Docker启动失败**
+**1. Docker镜像拉取失败**
+
+**问题现象**:
+- `nvidia/cuda:11.8-devel-ubuntu22.04: not found`
+- `failed to resolve source metadata`
+- `EOF` 网络连接错误
+- `version is obsolete` 警告
+
+**解决方案**:
+
+**方案1: 使用备用Dockerfile**
+```bash
+# 构建备用镜像（使用Ubuntu基础镜像）
+docker build -f Dockerfile.alternative -t anime-upscaler-api .
+
+# 手动运行容器
+docker run -d \
+  --name anime-upscaler-api \
+  -p 3005:3005 \
+  -v $(pwd)/uploads:/app/uploads \
+  -v $(pwd)/outputs:/app/outputs \
+  -v $(pwd)/config.env:/app/config.env:ro \
+  anime-upscaler-api
+```
+
+**方案2: 配置Docker代理**
+
+*Windows用户*:
+```powershell
+# 设置环境变量
+$env:HTTP_PROXY="http://127.0.0.1:7897"
+$env:HTTPS_PROXY="http://127.0.0.1:7897"
+
+# 或在Docker Desktop设置中配置代理
+# Settings -> Resources -> Proxies
+```
+
+*Linux用户*:
+```bash
+# 创建Docker代理配置目录
+sudo mkdir -p /etc/systemd/system/docker.service.d
+
+# 创建代理配置文件
+sudo tee /etc/systemd/system/docker.service.d/http-proxy.conf <<EOF
+[Service]
+Environment="HTTP_PROXY=http://127.0.0.1:7897"
+Environment="HTTPS_PROXY=http://127.0.0.1:7897"
+Environment="NO_PROXY=localhost,127.0.0.1,docker-registry.somecorporation.com"
+EOF
+
+# 重新加载配置并重启Docker
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+
+# 验证配置
+sudo systemctl show --property=Environment docker
+```
+
+**方案3: 配置Docker镜像加速器**
+```bash
+# 创建或编辑Docker配置文件
+sudo tee /etc/docker/daemon.json <<EOF
+{
+  "registry-mirrors": [
+    "https://docker.mirrors.ustc.edu.cn",
+    "https://hub-mirror.c.163.com",
+    "https://mirror.baidubce.com",
+    "https://dockerhub.azk8s.cn"
+  ],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  }
+}
+EOF
+
+# 重启Docker服务
+sudo systemctl restart docker
+
+# 验证配置
+docker info | grep -A 10 "Registry Mirrors"
+```
+
+**方案4: 手动拉取镜像**
+```bash
+# 尝试手动拉取基础镜像
+docker pull nvidia/cuda:11.8-devel-ubuntu22.04
+
+# 如果失败，使用其他版本
+docker pull nvidia/cuda:11.8-runtime-ubuntu22.04
+docker pull nvidia/cuda:12.0-devel-ubuntu22.04
+
+# 修改Dockerfile中的FROM行
+sed -i 's/nvidia\/cuda:11.8-devel-ubuntu22.04/nvidia\/cuda:11.8-runtime-ubuntu22.04/g' Dockerfile
+```
+
+**2. Docker启动失败**
 ```bash
 # 检查Docker服务
 sudo systemctl status docker
@@ -376,7 +473,7 @@ sudo netstat -tlnp | grep 3005
 sudo docker-compose logs app
 ```
 
-**2. GPU不可用**
+**3. GPU不可用**
 ```bash
 # 检查NVIDIA驱动
 nvidia-smi
@@ -388,7 +485,7 @@ docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
 sudo systemctl restart docker
 ```
 
-**3. 内存不足**
+**4. 内存不足**
 ```bash
 # 检查系统内存
 free -h
@@ -401,7 +498,7 @@ echo "MAX_WORKERS=1" >> config.env
 echo "USE_HALF_PRECISION=true" >> config.env
 ```
 
-**4. 网络连接问题**
+**5. 网络连接问题**
 ```bash
 # 检查防火墙
 sudo ufw status
@@ -411,6 +508,18 @@ sudo iptables -L
 sudo ufw allow 3005
 sudo firewall-cmd --permanent --add-port=3005/tcp
 sudo firewall-cmd --reload
+```
+
+**6. 版本兼容性问题**
+
+**问题**: Docker Compose版本警告
+```
+time="2025-06-30T16:48:51+08:00" level=warning msg="version is obsolete"
+```
+
+**解决**: 已修复，更新项目即可:
+```bash
+git pull origin main
 ```
 
 ### 日志分析
