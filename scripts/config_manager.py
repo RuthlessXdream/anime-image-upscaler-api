@@ -8,8 +8,15 @@ import sys
 import os
 from pathlib import Path
 
-# 添加项目根目录到Python路径
-project_root = Path(__file__).parent
+# 添加项目根目录到Python路径 - 修改为支持从scripts目录运行
+current_file = Path(__file__).resolve()
+if current_file.parent.name == 'scripts':
+    # 从scripts目录运行
+    project_root = current_file.parent.parent
+else:
+    # 从项目根目录运行
+    project_root = current_file.parent
+
 sys.path.insert(0, str(project_root))
 
 from app.config import settings
