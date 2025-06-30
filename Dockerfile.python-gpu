@@ -1,6 +1,6 @@
-# GPU备用Dockerfile - 使用正确的CUDA基础镜像
-# 使用方法：docker build -f Dockerfile.gpu-alternative -t anime-upscaler-api .
-FROM nvidia/cuda:11.8-runtime-ubuntu22.04
+# 轻量级GPU Dockerfile - 基于Python官方镜像
+# 使用方法：docker build -f Dockerfile.python-gpu -t anime-upscaler-api .
+FROM python:3.10-slim
 
 # 设置环境变量
 ENV PYTHONUNBUFFERED=1 \
@@ -9,15 +9,8 @@ ENV PYTHONUNBUFFERED=1 \
     TZ=Asia/Shanghai \
     PORT=3005
 
-# 配置APT镜像源（中国用户加速）
-RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && \
-    sed -i 's/security.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list
-
 # 安装系统依赖（最小化）
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 \
-    python3-pip \
-    python3-dev \
     git \
     wget \
     curl \
@@ -27,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # 配置pip镜像源（中国用户加速）
-RUN pip3 config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 创建工作目录
 WORKDIR /app
@@ -36,11 +29,11 @@ WORKDIR /app
 COPY requirements/base.txt /app/requirements.txt
 COPY requirements.txt /app/requirements_main.txt
 
-# 安装GPU版本的PyTorch（CUDA 11.8支持）
-RUN pip3 install --no-cache-dir --upgrade pip && \
-    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 && \
-    pip3 install --no-cache-dir -r requirements.txt && \
-    pip3 install --no-cache-dir -r requirements_main.txt
+# 安装GPU版本的PyTorch（自动检测CUDA版本）
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements_main.txt
 
 # 复制项目文件
 COPY . /app/
@@ -52,7 +45,7 @@ RUN mkdir -p /app/uploads /app/outputs /app/Real-ESRGAN/weights
 RUN chmod +x /app/docker-entrypoint.sh
 
 # 下载模型文件（如果不存在）
-RUN python3 scripts/install_dependencies.py || echo "模型下载可能失败，将在运行时重试"
+RUN python scripts/install_dependencies.py || echo "模型下载可能失败，将在运行时重试"
 
 # 暴露端口
 EXPOSE 3005
@@ -63,4 +56,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 
 # 设置启动脚本
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["python3", "start_modern.py"] 
+CMD ["python", "start_modern.py"] 

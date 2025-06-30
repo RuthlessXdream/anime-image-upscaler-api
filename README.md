@@ -38,6 +38,10 @@ nano config.env  # 修改端口、模型等配置
 **3. 一键启动**
 ```bash
 # GPU版本（推荐，需要NVIDIA GPU + CUDA支持）
+# 方法1: 轻量级Python版本（推荐 - 镜像小，构建快）
+sudo docker-compose -f docker-compose.python-gpu.yml up --build -d
+
+# 方法2: 标准CUDA版本（镜像较大）
 sudo docker-compose up --build -d
 
 # CPU版本（适用于无GPU环境）
@@ -119,24 +123,38 @@ ALLOWED_EXTENSIONS=.jpg,.jpeg,.png,.bmp,.tiff,.webp
 | **适用场景** | 生产环境、高并发 | 开发测试、无GPU环境 |
 | **启动命令** | `docker-compose up -d` | `docker-compose -f docker-compose.cpu.yml up -d` |
 
-### 🐳 Dockerfile选择指南
+### Dockerfile选择指南
 
-**有GPU用户（推荐）**：
-- **首选**: `Dockerfile` - 使用CUDA 11.8，性能最佳
-- **备选**: `Dockerfile.gpu-alternative` - 使用CUDA 12.1，网络友好
+**🚀 GPU用户（推荐）**：
+- **首选**: `Dockerfile.python-gpu` - 基于Python 3.10-slim，镜像小，构建快
+- **备选**: `Dockerfile` - 使用CUDA 11.8，功能完整但镜像较大
+- **修复版**: `Dockerfile.gpu-alternative` - 修复了错误的CUDA标签
 - **避免**: `Dockerfile.alternative` - 仅CPU版本，浪费GPU性能
 
-**无GPU用户**：
+**💻 无GPU用户**：
 - **唯一选择**: `Dockerfile.alternative` - CPU版本，兼容性最好
+
+**📊 镜像大小对比**：
+| Dockerfile | 基础镜像 | 预估大小 | 构建时间 | 推荐度 |
+|------------|----------|----------|----------|--------|
+| `Dockerfile.python-gpu` | python:3.10-slim | ~2GB | 快 | ⭐⭐⭐⭐⭐ |
+| `Dockerfile` | nvidia/cuda:11.8-devel | ~8GB | 中等 | ⭐⭐⭐ |
+| `Dockerfile.gpu-alternative` | nvidia/cuda:11.8-runtime | ~6GB | 中等 | ⭐⭐⭐ |
+| `Dockerfile.alternative` | ubuntu:22.04 | ~3GB | 快 | ⭐⭐ (仅CPU) |
 
 ```bash
 # 🚀 GPU用户（RTX 3060/4070/4090等）
-# 方法1: 标准GPU版本（推荐）
-docker build -t anime-upscaler-api .
-docker-compose up -d
+# 方法1: 轻量级Python版本（强烈推荐）
+docker build -f Dockerfile.python-gpu -t anime-upscaler-api .
 
-# 方法2: 如果CUDA 11.8镜像拉取失败，使用CUDA 12.1
+# 方法2: 标准CUDA版本
+docker build -t anime-upscaler-api .
+
+# 方法3: 如果上述都失败，使用修复版
 docker build -f Dockerfile.gpu-alternative -t anime-upscaler-api .
+
+# 启动GPU容器
+docker run -d --gpus all -p 3005:3005 --name anime-upscaler-api anime-upscaler-api
 
 # ❌ 错误用法 - 不要在有GPU的机器上使用CPU版本
 # docker build -f Dockerfile.alternative  # 这会浪费您的GPU！

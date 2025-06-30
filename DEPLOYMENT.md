@@ -80,15 +80,19 @@ nano config.env
 # 检查GPU可用性
 nvidia-smi
 
-# 方法1: 标准GPU版本（CUDA 11.8）
+# 方法1: 轻量级Python版本（强烈推荐）
+docker build -f Dockerfile.python-gpu -t anime-upscaler-api .
+docker run -d --gpus all -p 3005:3005 --name anime-upscaler-api anime-upscaler-api
+
+# 方法2: 标准CUDA版本（镜像较大）
 sudo docker-compose up --build -d
 
-# 方法2: 如果CUDA 11.8镜像拉取失败，使用备用GPU版本（CUDA 12.1）
+# 方法3: 如果上述都失败，使用修复版CUDA镜像
 docker build -f Dockerfile.gpu-alternative -t anime-upscaler-api .
 docker run -d --gpus all -p 3005:3005 --name anime-upscaler-api anime-upscaler-api
 
 # 查看启动日志
-sudo docker-compose logs -f app
+docker logs -f anime-upscaler-api
 ```
 
 **CPU模式（适用于无独立显卡的用户）**
@@ -531,102 +535,3 @@ sudo ufw allow 3005
 sudo firewall-cmd --permanent --add-port=3005/tcp
 sudo firewall-cmd --reload
 ```
-
-**6. 版本兼容性问题**
-
-**问题**: Docker Compose版本警告
-```
-time="2025-06-30T16:48:51+08:00" level=warning msg="version is obsolete"
-```
-
-**解决**: 已修复，更新项目即可:
-```bash
-git pull origin main
-```
-
-### 日志分析
-
-**应用日志**
-```bash
-# Docker日志
-sudo docker-compose logs -f app
-
-# 系统服务日志
-sudo journalctl -u upscale-api -f
-
-# Nginx日志
-sudo tail -f /var/log/nginx/access.log
-sudo tail -f /var/log/nginx/error.log
-```
-
-**性能监控**
-```bash
-# 系统资源监控
-htop
-iotop
-nvidia-smi -l 1
-
-# API性能测试
-curl -w "@curl-format.txt" -o /dev/null -s http://localhost:3005/health
-```
-
-## 📊 部署验证
-
-### 功能测试
-
-**基础API测试**
-```bash
-# 健康检查
-curl http://localhost:3005/health
-
-# 系统状态
-curl http://localhost:3005/api/v1/system/status
-
-# 图像处理测试
-curl -X POST "http://localhost:3005/api/v1/upscale" \
-     -H "Content-Type: multipart/form-data" \
-     -F "file=@test_image.jpg" \
-     -o upscaled_result.jpg
-```
-
-**压力测试**
-```bash
-# 安装测试工具
-sudo apt install apache2-utils
-
-# 并发测试
-ab -n 100 -c 10 http://localhost:3005/health
-
-# 文件上传测试
-for i in {1..10}; do
-  curl -X POST "http://localhost:3005/api/v1/upscale" \
-       -F "file=@test.jpg" \
-       -o "result_$i.jpg" &
-done
-wait
-```
-
-## 🎉 部署完成
-
-部署成功后，您的API服务将在以下地址可用：
-
-- **API服务**: http://localhost:3005
-- **API文档**: http://localhost:3005/docs
-- **健康检查**: http://localhost:3005/health
-- **系统状态**: http://localhost:3005/api/v1/system/status
-
-### 后续步骤
-
-1. **域名配置**: 配置DNS解析到服务器IP
-2. **SSL证书**: 启用HTTPS加密
-3. **监控告警**: 配置服务监控和告警
-4. **备份策略**: 设置数据备份计划
-5. **更新策略**: 建立版本更新流程
-
-### 获得帮助
-
-如果部署过程中遇到问题：
-- 📖 查看 [README.md](README.md) 了解基础使用
-- 🔧 查看 [CONFIG_GUIDE.md](CONFIG_GUIDE.md) 了解配置详情
-- 🐛 在 [GitHub Issues](https://github.com/RuthlessXdream/anime-image-upscaler-api/issues) 提交问题
-- 💬 在 [GitHub Discussions](https://github.com/RuthlessXdream/anime-image-upscaler-api/discussions) 参与讨论 
