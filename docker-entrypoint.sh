@@ -33,7 +33,7 @@ MODEL_PATH="/app/Real-ESRGAN/weights/RealESRGAN_x4plus_anime_6B.pth"
 if [ ! -f "$MODEL_PATH" ]; then
     echo "📥 模型文件不存在，正在下载..."
     cd /app
-    python3 install_dependencies.py || {
+    python3 scripts/install_dependencies.py || {
         echo "❌ 模型下载失败，请检查网络连接"
         echo "💡 您也可以手动下载模型文件到 Real-ESRGAN/weights/ 目录"
         exit 1
